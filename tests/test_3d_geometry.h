@@ -32,8 +32,8 @@
 #ifndef TEST_3D_GEOMETRY_H
 #define TEST_3D_GEOMETRY_H
 
-#include "core\math\vector3.h"
-#include "core\math\geometry_3d.h"
+#include "core/math/vector3.h"
+#include "core/math/geometry_3d.h"
 #include "tests/test_macros.h"
 namespace Test3DGeometry {
 	TEST_CASE("[Vector3]get_closest_points_between_segments") {
@@ -44,8 +44,12 @@ namespace Test3DGeometry {
 		Vector3 c1 = Vector3();
 		Vector3 c2 = Vector3();
 		Geometry3D::get_closest_points_between_segments(p1, p2, q1, q2, c1, c2);
-		CHECK(c1 == Vector3(0, 0, 0));
-		CHECK(c2 == Vector3(0, 0, 0));
+		MESSAGE(c1);
+		MESSAGE(c2);
+		CHECK(c1 == Vector3(5, 7, 2));
+		c2 = Vector3(round(c2.x), round(c2.y), round(c2.z));
+		CHECK(c2 == Vector3(7,6,2));
+
 	}
 }
 #endif
