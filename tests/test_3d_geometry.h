@@ -35,8 +35,12 @@
 #include "core/math/vector3.h"
 #include "core/math/geometry_3d.h"
 #include "tests/test_macros.h"
+#include "core/math/plane.h"
 namespace Test3DGeometry {
-	TEST_CASE("[Vector3]get_closest_points_between_segments") {
+	/// <summary>
+	/// Static maths function tests
+	/// </summary>
+	TEST_CASE("[Geometry3D] get_closest_points_between_segments") {
 		const Vector3 p1 = Vector3(5, 7, 2);
 		const Vector3 p2 = Vector3(3, 8, 1);
 		const Vector3 q1 = Vector3(2, 3, 1);
@@ -49,7 +53,25 @@ namespace Test3DGeometry {
 		CHECK(c1 == Vector3(5, 7, 2));
 		c2 = Vector3(round(c2.x), round(c2.y), round(c2.z));
 		CHECK(c2 == Vector3(7,6,2));
-
 	}
+	TEST_CASE("[Geometry3D] get_closest_distance_between_segments") {
+		const Vector3 p_from_a = Vector3();
+		const Vector3 p_to_a = Vector3();
+		const Vector3 p_from_b = Vector3();
+		const Vector3 p_to_b = Vector3();
+		float out = Geometry3D::get_closest_distance_between_segments(p_from_a, p_to_a, p_from_b, p_to_b);
+		MESSAGE(out);
+		CHECK(out == 0.0f);
+	}
+	TEST_CASE("[Geometry3D] build_box_planes") {
+		const Vector3 extents = Vector3(5, 3, 7);
+		Vector<Plane> box = Geometry3D::build_box_planes(extents);
+		for (int x = 0; x < box.size(); x++) {
+			
+		}
+	}
+
+	
+
 }
 #endif
