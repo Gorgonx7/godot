@@ -64,13 +64,32 @@ namespace Test3DGeometry {
 		CHECK(out == 0.0f);
 	}
 	TEST_CASE("[Geometry3D] build_box_planes") {
-		const Vector3 extents = Vector3(5, 3, 7);
+		RandomNumberGenerator rng = RandomNumberGenerator();
+		rng.set_seed(time(0));
+		const Vector3 extents = Vector3(rng.randi(), rng.randi(), rng.randi());
 		Vector<Plane> box = Geometry3D::build_box_planes(extents);
-		for (int x = 0; x < box.size(); x++) {
-			
-		}
+		CHECK(extents.x == box[0].d);
+		CHECK(box[0].normal == Vector3(1, 0, 0));
+		CHECK(extents.x == box[1].d);
+		CHECK(box[1].normal == Vector3(-1, 0, 0));
+		CHECK(extents.y == box[2].d);
+		CHECK(box[2].normal == Vector3(0, 1, 0));
+		CHECK(extents.y == box[3].d);
+		CHECK(box[3].normal == Vector3(0, -1, 0));
+		CHECK(extents.z == box[4].d);
+		CHECK(box[4].normal == Vector3(0, 0, 1));
+		CHECK(extents.z == box[5].d);
+		CHECK(box[5].normal == Vector3(0, 0, -1));
 	}
+	TEST_CASE("[Geometry3D] build_capsule_planes") {
+		real_t p_radius = 10;
+		real_t p_height = 20;
+		int p_sides = 6;
+		int p_lats = 10;
+		Vector3::Axis p_axis = Vector3::Axis();
+		Vector<Plane> capsule = Geometry3D::build_capsule_planes(p_radius, p_height, p_sides, p_lats, p_axis);
 
+	}
 	
 
 }
