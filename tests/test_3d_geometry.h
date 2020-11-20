@@ -36,6 +36,7 @@
 #include "core/math/geometry_3d.h"
 #include "tests/test_macros.h"
 #include "core/math/plane.h"
+#include "core/math/random_number_generator.h"
 namespace Test3DGeometry {
 	/// <summary>
 	/// Static maths function tests
@@ -55,10 +56,10 @@ namespace Test3DGeometry {
 		CHECK(c2 == Vector3(7,6,2));
 	}
 	TEST_CASE("[Geometry3D] get_closest_distance_between_segments") {
-		const Vector3 p_from_a = Vector3();
-		const Vector3 p_to_a = Vector3();
-		const Vector3 p_from_b = Vector3();
-		const Vector3 p_to_b = Vector3();
+		const Vector3 p_from_a = Vector3(5,4,3);
+		const Vector3 p_to_a = Vector3(13,24,26);
+		const Vector3 p_from_b = Vector3(2,2,1);
+		const Vector3 p_to_b = Vector3(4,5,6);
 		float out = Geometry3D::get_closest_distance_between_segments(p_from_a, p_to_a, p_from_b, p_to_b);
 		MESSAGE(out);
 		CHECK(out == 0.0f);
@@ -88,9 +89,15 @@ namespace Test3DGeometry {
 		int p_lats = 10;
 		Vector3::Axis p_axis = Vector3::Axis();
 		Vector<Plane> capsule = Geometry3D::build_capsule_planes(p_radius, p_height, p_sides, p_lats, p_axis);
+		CHECK(capsule.size() == 126);
+		
+	}
+	TEST_CASE("[Geometry3D] build_convex_mesh") {
+		const Vector3 extents = Vector3(5, 10, 5);
+		Vector<Plane> box = Geometry3D::build_box_planes(extents);
+		Geometry3D::MeshData mesh = Geometry3D::build_convex_mesh(box);
 
 	}
-	
 
 }
 #endif
