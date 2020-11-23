@@ -187,5 +187,46 @@ namespace Test3DGeometry {
 		bool output = Geometry3D::ray_intersects_triangle(p_from, p_dir, p_v, p_v1, p_v2, r_res);
 		CHECK(&output != nullptr);
 	}
+	TEST_CASE("[Geometry3D] segment_intersects_convex") {
+		const Vector3 p_from;
+		const Vector3 p_to;
+		const Plane *p_planes;
+		int p_plane_count;
+		Vector3 *p_res;
+		Vector3 *p_norm;
+		bool output = Geometry3D::segment_intersects_convex(p_from, p_to, p_planes, p_plane_count, p_res, p_norm);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] segment_intersects_cylinder") {
+		const Vector3 p_from;
+		const Vector3 p_to;
+		real_t p_height;
+		real_t p_radius;
+		Vector3 *r_res = nullptr;
+		Vector3 *r_norm = nullptr;
+		bool output = Geometry3D::segment_intersects_cylinder(p_from, p_to, p_height, p_radius, r_res, r_norm);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] segment_intersects_cylinder") {
+		const Vector3 p_from;
+		const Vector3 p_to;
+		const Vector3 p_sphere_pos;
+		real_t p_sphere_radius; 
+		Vector3 *r_res = nullptr;
+		Vector3 *r_norm = nullptr;
+		bool output = Geometry3D::segment_intersects_sphere(p_from, p_to, p_sphere_pos, p_sphere_radius, r_res, r_norm);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] segment_intersects_triangle") {
+		const Vector3 p_from;
+		const Vector3 p_to;
+		const Vector3 p_v0;
+		const Vector3 p_v1;
+		const Vector3 p_v2;
+		Vector3 *r_res = nullptr;
+		bool output = Geometry3D::segment_intersects_triangle(p_from, p_to, p_v0, p_v1, p_v2, r_res);
+		CHECK(&output != nullptr);
+
+	}
 	}
 #endif
