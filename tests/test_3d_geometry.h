@@ -96,8 +96,96 @@ namespace Test3DGeometry {
 		const Vector3 extents = Vector3(5, 10, 5);
 		Vector<Plane> box = Geometry3D::build_box_planes(extents);
 		Geometry3D::MeshData mesh = Geometry3D::build_convex_mesh(box);
-
+		CHECK(&mesh != nullptr);
+		
 	}
+	TEST_CASE("[Geometry3D] build_cylinder_planes") {
+		real_t p_radius = 0.0f;
+		real_t p_height = 0.0f;
+		int p_sides = 0;
+		Vector3::Axis p_axis = Vector3::Axis();
+		Vector<Plane> planes = Geometry3D::build_cylinder_planes(p_radius, p_height, p_sides, p_axis);
+		CHECK(&planes != nullptr);
+	}
+	TEST_CASE("[Geometry3D] build_sphere_planes") {
+		real_t p_radius = 0.0f;
+		int p_lats = 0;
+		int p_lons = 0;
+		Vector3::Axis p_axis = Vector3::Axis();
+		Vector<Plane> planes = Geometry3D::build_sphere_planes(p_radius, p_lats, p_lons, p_axis);
+		CHECK(&planes != nullptr);
+	}
+	TEST_CASE("[Geometry3D] clip_polygon") {
+		const Vector<Vector3> polygon = Vector<Vector3>();
+		const Plane p_plane = Plane();
+		Vector<Vector3> output = Geometry3D::clip_polygon(polygon, p_plane);
+		CHECK(&output != nullptr);	
+	}
+	TEST_CASE("[Geometry3D] compute_convex_mesh_points") {
+		const Plane plane = Plane();
+		int planeCount = 0;
 
-}
+		Vector<Vector3> vectors =  Geometry3D::compute_convex_mesh_points(&plane, planeCount);
+		CHECK(&vectors != nullptr);
+		
+	}
+	TEST_CASE("[Geometry3D] generate_edf") {
+		const Vector<bool> p_voxels = Vector<bool>();
+		const Vector3i p_size = Vector3i();
+		bool p_negative = false;
+		Vector<uint32_t> edf = Geometry3D::generate_edf(p_voxels, p_size, p_negative);
+		p_negative = true;
+		Vector<uint32_t> edffalse = Geometry3D::generate_edf(p_voxels, p_size, p_negative);
+		CHECK(&edf != nullptr);
+		CHECK(&edffalse != nullptr);
+	}
+	TEST_CASE("[Geometry3D] generate_sdf8") {
+		const Vector<uint32_t> p_positive = Vector<uint32_t>();
+		const Vector<uint32_t> p_negative = Vector<uint32_t>();
+		Vector<int8_t> sdf8 = Geometry3D::generate_sdf8(p_positive, p_negative);
+		CHECK(&sdf8 != nullptr);
+	}
+	TEST_CASE("[Geometry3D] get_closest_point_to_segment") {
+		const Vector3 p_point = Vector3();
+		Vector3 p_segment[2] = {Vector3(), Vector3()};
+		Vector3 output = Geometry3D::get_closest_point_to_segment(p_point, p_segment);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] get_closest_point_to_segment") {
+		const Vector3 p_point= Vector3();
+		Vector3 p_segment[2] = { Vector3(), Vector3() };
+		Vector3 point = Geometry3D::get_closest_point_to_segment_uncapped(p_point, p_segment);
+		CHECK(&point != nullptr);
+	}
+	TEST_CASE("[Geometry3D] octahedron_map_decode") {
+		const Vector2 p_uv = Vector2();
+		Vector3 output = Geometry3D::octahedron_map_decode(p_uv);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] planeBoxOverlap") {
+		Vector3 normal = Vector3();
+		float d = 0.0f;
+		Vector3 maxbox = Vector3();
+		bool overlap = Geometry3D::planeBoxOverlap(normal, d, maxbox);
+		CHECK(&overlap != nullptr);
+	}
+	TEST_CASE("[Geometry3D] point_in_projected_triangle") {
+		const Vector3 p_point = Vector3();
+		const Vector3 p_v1 = Vector3();
+		const Vector3 p_v2 = Vector3();
+		const Vector3 p_v3 = Vector3();
+		bool output = Geometry3D::point_in_projected_triangle(p_point, p_v1, p_v2, p_v3);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] ray_intersects_triangle") {
+		const Vector3 p_from = Vector3();
+		const Vector3 p_dir = Vector3();
+		const Vector3 p_v = Vector3();
+		const Vector3 p_v1 = Vector3();
+		const Vector3 p_v2 = Vector3();
+		Vector3 *r_res = nullptr;
+		bool output = Geometry3D::ray_intersects_triangle(p_from, p_dir, p_v, p_v1, p_v2, r_res);
+		CHECK(&output != nullptr);
+	}
+	}
 #endif
