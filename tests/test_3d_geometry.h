@@ -188,45 +188,89 @@ namespace Test3DGeometry {
 		CHECK(&output != nullptr);
 	}
 	TEST_CASE("[Geometry3D] segment_intersects_convex") {
-		const Vector3 p_from;
-		const Vector3 p_to;
+		const Vector3 p_from = Vector3();
+		const Vector3 p_to = Vector3();
 		const Plane *p_planes;
 		int p_plane_count;
-		Vector3 *p_res;
-		Vector3 *p_norm;
+		Vector3 *p_res = new Vector3();
+		Vector3 *p_norm = new Vector3();
 		bool output = Geometry3D::segment_intersects_convex(p_from, p_to, p_planes, p_plane_count, p_res, p_norm);
 		CHECK(&output != nullptr);
 	}
 	TEST_CASE("[Geometry3D] segment_intersects_cylinder") {
-		const Vector3 p_from;
-		const Vector3 p_to;
-		real_t p_height;
-		real_t p_radius;
+		const Vector3 p_from = Vector3();
+		const Vector3 p_to = Vector3();
+		real_t p_height = 0.0f;
+		real_t p_radius = 0.0f;
 		Vector3 *r_res = nullptr;
 		Vector3 *r_norm = nullptr;
 		bool output = Geometry3D::segment_intersects_cylinder(p_from, p_to, p_height, p_radius, r_res, r_norm);
 		CHECK(&output != nullptr);
 	}
 	TEST_CASE("[Geometry3D] segment_intersects_cylinder") {
-		const Vector3 p_from;
-		const Vector3 p_to;
-		const Vector3 p_sphere_pos;
-		real_t p_sphere_radius; 
+		const Vector3 p_from = Vector3();
+		const Vector3 p_to = Vector3();
+		const Vector3 p_sphere_pos = Vector3();
+		real_t p_sphere_radius = 0.0f;
 		Vector3 *r_res = nullptr;
 		Vector3 *r_norm = nullptr;
 		bool output = Geometry3D::segment_intersects_sphere(p_from, p_to, p_sphere_pos, p_sphere_radius, r_res, r_norm);
 		CHECK(&output != nullptr);
 	}
 	TEST_CASE("[Geometry3D] segment_intersects_triangle") {
-		const Vector3 p_from;
-		const Vector3 p_to;
-		const Vector3 p_v0;
-		const Vector3 p_v1;
-		const Vector3 p_v2;
+		const Vector3 p_from = Vector3();
+		const Vector3 p_to = Vector3();
+		const Vector3 p_v0 = Vector3();
+		const Vector3 p_v1 = Vector3();
+		const Vector3 p_v2 = Vector3();
 		Vector3 *r_res = nullptr;
 		bool output = Geometry3D::segment_intersects_triangle(p_from, p_to, p_v0, p_v1, p_v2, r_res);
 		CHECK(&output != nullptr);
-
+	}
+	TEST_CASE("[Geometry3D] separate_objects") {
+		Vector<Face3> p_array = Vector<Face3>();
+		Vector<Vector<Face3>> output = Geometry3D::separate_objects(p_array);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] tetrahedron_get_barycentric_coords") {
+		const Vector3 p_a = Vector3();
+		const Vector3 p_b = Vector3();
+		const Vector3 p_c = Vector3();
+		const Vector3 p_d = Vector3();
+		const Vector3 p_pos = Vector3();
+		Color output = Geometry3D::tetrahedron_get_barycentric_coords(p_a, p_b, p_c, p_d, p_pos);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] triangle_box_overlap") {
+		const Vector3 boxcenter = Vector3();
+		const Vector3 boxhalfsize = Vector3();
+		const Vector3 *triverts = new Vector3();
+		bool output = Geometry3D::triangle_box_overlap(boxcenter, boxhalfsize, triverts);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] triangle_get_barycentric_coords") {
+		const Vector3 p_a = Vector3();
+		const Vector3 p_b = Vector3();
+		const Vector3 p_c = Vector3();
+		const Vector3 p_pos = Vector3();
+		Vector3 output = Geometry3D::triangle_get_barycentric_coords(p_a, p_b, p_c, p_pos);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] triangle_sphere_intersection_test") {
+		const Vector3 *p_triangle = new Vector3();
+		const Vector3 p_normal = Vector3();
+		const Vector3 p_sphere_pos = Vector3();
+		real_t p_sphere_radius = 0.0f;
+		Vector3 r_triangle_contact = Vector3();
+		Vector3 r_sphere_contact = Vector3();
+		bool output = Geometry3D::triangle_sphere_intersection_test(p_triangle, p_normal, p_sphere_pos, p_sphere_radius, r_triangle_contact, r_sphere_contact);
+		CHECK(&output != nullptr);
+	}
+	TEST_CASE("[Geometry3D] wrap_geometry") {
+		Vector<Face3> p_array;
+		real_t *p_error;
+		Vector<Face3> output = Geometry3D::wrap_geometry(p_array, p_error);
+		CHECK(&output != nullptr);
 	}
 	}
 #endif
