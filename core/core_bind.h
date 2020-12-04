@@ -83,7 +83,6 @@ protected:
 
 public:
 	enum SaverFlags {
-
 		FLAG_RELATIVE_PATHS = 1,
 		FLAG_BUNDLE_RESOURCES = 2,
 		FLAG_CHANGE_PATH = 4,
@@ -361,7 +360,6 @@ protected:
 
 public:
 	enum ModeFlags {
-
 		READ = 1,
 		WRITE = 2,
 		READ_WRITE = 3,
@@ -494,8 +492,8 @@ public:
 	virtual ~_Directory();
 
 private:
-	bool _list_skip_navigational;
-	bool _list_skip_hidden;
+	bool _list_skip_navigational = false;
+	bool _list_skip_hidden = false;
 };
 
 class _Marshalls : public Object {
@@ -561,7 +559,6 @@ protected:
 
 public:
 	enum Priority {
-
 		PRIORITY_LOW,
 		PRIORITY_NORMAL,
 		PRIORITY_HIGH,

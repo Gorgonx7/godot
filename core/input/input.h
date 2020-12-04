@@ -147,7 +147,6 @@ private:
 		bool connected = false;
 		bool last_buttons[JOY_BUTTON_MAX] = { false };
 		float last_axis[JOY_AXIS_MAX] = { 0.0f };
-		float filter = 0.01f;
 		int last_hat = HAT_MASK_CENTER;
 		int mapping = -1;
 		int hat_current = 0;
@@ -330,11 +329,6 @@ public:
 
 	void add_joy_mapping(String p_mapping, bool p_update_existing = false);
 	void remove_joy_mapping(String p_guid);
-
-	String get_joy_button_string(int p_button);
-	String get_joy_axis_string(int p_axis);
-	int get_joy_axis_index_from_string(String p_axis);
-	int get_joy_button_index_from_string(String p_button);
 
 	int get_unused_joy_id();
 

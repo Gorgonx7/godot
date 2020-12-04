@@ -60,10 +60,7 @@ enum ButtonList {
 };
 
 enum JoyButtonList {
-
-	JOY_INVALID_BUTTON = -1,
-
-	// SDL Buttons
+	JOY_BUTTON_INVALID = -1,
 	JOY_BUTTON_A = 0,
 	JOY_BUTTON_B = 1,
 	JOY_BUTTON_X = 2,
@@ -79,64 +76,20 @@ enum JoyButtonList {
 	JOY_BUTTON_DPAD_DOWN = 12,
 	JOY_BUTTON_DPAD_LEFT = 13,
 	JOY_BUTTON_DPAD_RIGHT = 14,
-	JOY_SDL_BUTTONS = 15,
-
-	// Sony Buttons
-	JOY_SONY_X = JOY_BUTTON_A,
-	JOY_SONY_CROSS = JOY_BUTTON_A,
-	JOY_SONY_CIRCLE = JOY_BUTTON_B,
-	JOY_SONY_SQUARE = JOY_BUTTON_X,
-	JOY_SONY_TRIANGLE = JOY_BUTTON_Y,
-	JOY_SONY_SELECT = JOY_BUTTON_BACK,
-	JOY_SONY_START = JOY_BUTTON_START,
-	JOY_SONY_PS = JOY_BUTTON_GUIDE,
-	JOY_SONY_L1 = JOY_BUTTON_LEFT_SHOULDER,
-	JOY_SONY_R1 = JOY_BUTTON_RIGHT_SHOULDER,
-	JOY_SONY_L3 = JOY_BUTTON_LEFT_STICK,
-	JOY_SONY_R3 = JOY_BUTTON_RIGHT_STICK,
-
-	// Xbox Buttons
-	JOY_XBOX_A = JOY_BUTTON_A,
-	JOY_XBOX_B = JOY_BUTTON_B,
-	JOY_XBOX_X = JOY_BUTTON_X,
-	JOY_XBOX_Y = JOY_BUTTON_Y,
-	JOY_XBOX_BACK = JOY_BUTTON_BACK,
-	JOY_XBOX_START = JOY_BUTTON_START,
-	JOY_XBOX_HOME = JOY_BUTTON_GUIDE,
-	JOY_XBOX_LS = JOY_BUTTON_LEFT_STICK,
-	JOY_XBOX_RS = JOY_BUTTON_RIGHT_STICK,
-	JOY_XBOX_LB = JOY_BUTTON_LEFT_SHOULDER,
-	JOY_XBOX_RB = JOY_BUTTON_RIGHT_SHOULDER,
-
-	JOY_BUTTON_MAX = 36 // Apparently Android supports up to 36 buttons.
+	JOY_BUTTON_SDL_MAX = 15,
+	JOY_BUTTON_MAX = 36, // Android supports up to 36 buttons.
 };
 
 enum JoyAxisList {
-
-	JOY_INVALID_AXIS = -1,
-
-	// SDL Axes
+	JOY_AXIS_INVALID = -1,
 	JOY_AXIS_LEFT_X = 0,
 	JOY_AXIS_LEFT_Y = 1,
 	JOY_AXIS_RIGHT_X = 2,
 	JOY_AXIS_RIGHT_Y = 3,
 	JOY_AXIS_TRIGGER_LEFT = 4,
 	JOY_AXIS_TRIGGER_RIGHT = 5,
-	JOY_SDL_AXES = 6,
-
-	// Joystick axes.
-	JOY_AXIS_0_X = 0,
-	JOY_AXIS_0_Y = 1,
-	JOY_AXIS_1_X = 2,
-	JOY_AXIS_1_Y = 3,
-	JOY_AXIS_2_X = 4,
-	JOY_AXIS_2_Y = 5,
-	JOY_AXIS_3_X = 6,
-	JOY_AXIS_3_Y = 7,
-	JOY_AXIS_4_X = 8,
-	JOY_AXIS_4_Y = 9,
-
-	JOY_AXIS_MAX = 10 // OpenVR supports up to 5 Joysticks making a total of 10 axes.
+	JOY_AXIS_SDL_MAX = 6,
+	JOY_AXIS_MAX = 10, // OpenVR supports up to 5 Joysticks making a total of 10 axes.
 };
 
 enum MidiMessageList {
@@ -179,7 +132,7 @@ public:
 	virtual bool is_pressed() const;
 	virtual bool is_echo() const;
 
-	virtual String as_text() const;
+	virtual String as_text() const = 0;
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const;
 
@@ -210,6 +163,8 @@ public:
 class InputEventWithModifiers : public InputEventFromWindow {
 	GDCLASS(InputEventWithModifiers, InputEventFromWindow);
 
+	bool store_command = true;
+
 	bool shift = false;
 	bool alt = false;
 #ifdef APPLE_STYLE_KEYS
@@ -229,8 +184,12 @@ class InputEventWithModifiers : public InputEventFromWindow {
 
 protected:
 	static void _bind_methods();
+	virtual void _validate_property(PropertyInfo &property) const override;
 
 public:
+	void set_store_command(bool p_enabled);
+	bool is_storing_command() const;
+
 	void set_shift(bool p_enabled);
 	bool get_shift() const;
 
@@ -247,6 +206,9 @@ public:
 	bool get_command() const;
 
 	void set_modifiers_from_event(const InputEventWithModifiers *event);
+
+	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventWithModifiers() {}
 };
@@ -290,6 +252,7 @@ public:
 	virtual bool is_action_type() const override { return true; }
 
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventKey() {}
 };
@@ -347,6 +310,7 @@ public:
 
 	virtual bool is_action_type() const override { return true; }
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventMouseButton() {}
 };
@@ -377,6 +341,7 @@ public:
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const override;
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	virtual bool accumulate(const Ref<InputEvent> &p_event) override;
 
@@ -404,6 +369,7 @@ public:
 
 	virtual bool is_action_type() const override { return true; }
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventJoypadMotion() {}
 };
@@ -432,6 +398,7 @@ public:
 
 	virtual bool is_action_type() const override { return true; }
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventJoypadButton() {}
 };
@@ -457,6 +424,7 @@ public:
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const override;
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventScreenTouch() {}
 };
@@ -486,6 +454,7 @@ public:
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const override;
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventScreenDrag() {}
 };
@@ -517,6 +486,7 @@ public:
 	virtual bool shortcut_match(const Ref<InputEvent> &p_event) const override;
 	virtual bool is_action_type() const override { return true; }
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventAction() {}
 };
@@ -547,6 +517,7 @@ public:
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const override;
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventMagnifyGesture() {}
 };
@@ -564,6 +535,7 @@ public:
 
 	virtual Ref<InputEvent> xformed_by(const Transform2D &p_xform, const Vector2 &p_local_ofs = Vector2()) const override;
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventPanGesture() {}
 };
@@ -609,6 +581,7 @@ public:
 	int get_controller_value() const;
 
 	virtual String as_text() const override;
+	virtual String to_string() override;
 
 	InputEventMIDI() {}
 };

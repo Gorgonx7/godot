@@ -398,7 +398,11 @@ Error EditorExportPlatform::_save_zip_file(void *p_userdata, const String &p_pat
 Ref<ImageTexture> EditorExportPlatform::get_option_icon(int p_index) const {
 	Ref<Theme> theme = EditorNode::get_singleton()->get_editor_theme();
 	ERR_FAIL_COND_V(theme.is_null(), Ref<ImageTexture>());
-	return theme->get_icon("Play", "EditorIcons");
+	if (EditorNode::get_singleton()->get_viewport()->is_layout_rtl()) {
+		return theme->get_icon("PlayBackwards", "EditorIcons");
+	} else {
+		return theme->get_icon("Play", "EditorIcons");
+	}
 }
 
 String EditorExportPlatform::find_export_template(String template_file_name, String *err) const {
@@ -970,6 +974,15 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 	if (splash != String() && FileAccess::exists(splash) && icon != splash) {
 		Vector<uint8_t> array = FileAccess::get_file_as_array(splash);
 		p_func(p_udata, splash, array, idx, total, enc_in_filters, enc_ex_filters, key);
+	}
+
+	// Store text server data if exists.
+	if (TS->has_feature(TextServer::FEATURE_USE_SUPPORT_DATA)) {
+		String ts_data = "res://" + TS->get_support_data_filename();
+		if (FileAccess::exists(ts_data)) {
+			Vector<uint8_t> array = FileAccess::get_file_as_array(ts_data);
+			p_func(p_udata, ts_data, array, idx, total, enc_in_filters, enc_ex_filters, key);
+		}
 	}
 
 	String config_file = "project.binary";
@@ -1632,15 +1645,17 @@ void EditorExportPlatformPC::get_preset_features(const Ref<EditorExportPreset> &
 }
 
 void EditorExportPlatformPC::get_export_options(List<ExportOption> *r_options) {
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/debug", PROPERTY_HINT_GLOBAL_FILE), ""));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/release", PROPERTY_HINT_GLOBAL_FILE), ""));
+
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "binary_format/64_bits"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "binary_format/embed_pck"), false));
+
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "texture_format/bptc"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "texture_format/s3tc"), true));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "texture_format/etc"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "texture_format/etc2"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "texture_format/no_bptc_fallbacks"), true));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "binary_format/64_bits"), true));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "binary_format/embed_pck"), false));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/release", PROPERTY_HINT_GLOBAL_FILE), ""));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_template/debug", PROPERTY_HINT_GLOBAL_FILE), ""));
 }
 
 String EditorExportPlatformPC::get_name() const {

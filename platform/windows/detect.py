@@ -71,6 +71,7 @@ def get_opts():
         BoolVariable("use_mingw", "Use the Mingw compiler, even if MSVC is installed. Only used on Windows.", False),
         BoolVariable("use_llvm", "Use the LLVM compiler", False),
         BoolVariable("use_thinlto", "Use ThinLTO", False),
+        BoolVariable("use_static_cpp", "Link MinGW/MSVC C++ runtime libraries statically", True),
     ]
 
 
@@ -221,7 +222,11 @@ def configure_msvc(env, manual_msvc_config):
 
     ## Compile/link flags
 
-    env.AppendUnique(CCFLAGS=["/MT", "/Gd", "/GR", "/nologo"])
+    if env["use_static_cpp"]:
+        env.AppendUnique(CCFLAGS=["/MT"])
+    else:
+        env.AppendUnique(CCFLAGS=["/MD"])
+    env.AppendUnique(CCFLAGS=["/Gd", "/GR", "/nologo"])
     # Force to use Unicode encoding
     env.AppendUnique(CCFLAGS=["/utf-8"])
     env.AppendUnique(CXXFLAGS=["/TP"])  # assume all sources are C++
@@ -373,28 +378,29 @@ def configure_mingw(env):
     mingw_prefix = ""
 
     if env["bits"] == "32":
-        env.Append(LINKFLAGS=["-static"])
-        env.Append(LINKFLAGS=["-static-libgcc"])
-        env.Append(LINKFLAGS=["-static-libstdc++"])
+        if env["use_static_cpp"]:
+            env.Append(LINKFLAGS=["-static"])
+            env.Append(LINKFLAGS=["-static-libgcc"])
+            env.Append(LINKFLAGS=["-static-libstdc++"])
         mingw_prefix = env["mingw_prefix_32"]
     else:
-        env.Append(LINKFLAGS=["-static"])
+        if env["use_static_cpp"]:
+            env.Append(LINKFLAGS=["-static"])
         mingw_prefix = env["mingw_prefix_64"]
 
     if env["use_llvm"]:
         env["CC"] = mingw_prefix + "clang"
-        env["AS"] = mingw_prefix + "as"
         env["CXX"] = mingw_prefix + "clang++"
+        env["AS"] = mingw_prefix + "as"
         env["AR"] = mingw_prefix + "ar"
         env["RANLIB"] = mingw_prefix + "ranlib"
-        env["LINK"] = mingw_prefix + "clang++"
     else:
         env["CC"] = mingw_prefix + "gcc"
-        env["AS"] = mingw_prefix + "as"
         env["CXX"] = mingw_prefix + "g++"
+        env["AS"] = mingw_prefix + "as"
         env["AR"] = mingw_prefix + "gcc-ar"
         env["RANLIB"] = mingw_prefix + "gcc-ranlib"
-        env["LINK"] = mingw_prefix + "g++"
+
     env["x86_libtheora_opt_gcc"] = True
 
     if env["use_lto"]:

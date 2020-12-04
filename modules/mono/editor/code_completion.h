@@ -46,11 +46,11 @@ enum class CompletionKind {
 	THEME_COLORS,
 	THEME_CONSTANTS,
 	THEME_FONTS,
+	THEME_FONT_SIZES,
 	THEME_STYLES
 };
 
 PackedStringArray get_code_completion(CompletionKind p_kind, const String &p_script_file);
-
 } // namespace gdmono
 
 #endif // CODE_COMPLETION_H

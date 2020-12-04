@@ -209,7 +209,6 @@ void CharString::copy_from(const char *p_cstr) {
 /*  String                                                               */
 /*************************************************************************/
 
-//TODO: move to TextServer
 //kind of poor should be rewritten properly
 String String::word_wrap(int p_chars_per_line) const {
 	int from = 0;
@@ -3864,7 +3863,6 @@ String String::xml_escape(bool p_escape_quotes) const {
 	}
 	/*
 for (int i=1;i<32;i++) {
-
 	char chr[2]={i,0};
 	str=str.replace(chr,"&#"+String::num(i)+";");
 }*/
@@ -4797,7 +4795,7 @@ Vector<uint8_t> String::to_utf16_buffer() const {
 	Char16String charstr = s->utf16();
 
 	Vector<uint8_t> retval;
-	size_t len = charstr.length() * 2;
+	size_t len = charstr.length() * sizeof(char16_t);
 	retval.resize(len);
 	uint8_t *w = retval.ptrw();
 	copymem(w, (const void *)charstr.ptr(), len);
@@ -4812,7 +4810,7 @@ Vector<uint8_t> String::to_utf32_buffer() const {
 	}
 
 	Vector<uint8_t> retval;
-	size_t len = s->length() * 4;
+	size_t len = s->length() * sizeof(char32_t);
 	retval.resize(len);
 	uint8_t *w = retval.ptrw();
 	copymem(w, (const void *)s->ptr(), len);

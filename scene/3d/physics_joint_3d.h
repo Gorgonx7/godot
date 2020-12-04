@@ -46,6 +46,7 @@ class Joint3D : public Node3D {
 
 	int solver_priority;
 	bool exclude_from_collision;
+	String warning;
 
 protected:
 	void _update_joint(bool p_only_free = false);
@@ -57,6 +58,8 @@ protected:
 	static void _bind_methods();
 
 public:
+	virtual String get_configuration_warning() const override;
+
 	void set_node_a(const NodePath &p_node_a);
 	NodePath get_node_a() const;
 
@@ -203,7 +206,6 @@ class ConeTwistJoint3D : public Joint3D {
 
 public:
 	enum Param {
-
 		PARAM_SWING_SPAN,
 		PARAM_TWIST_SPAN,
 		PARAM_BIAS,
@@ -237,7 +239,6 @@ class Generic6DOFJoint3D : public Joint3D {
 
 public:
 	enum Param {
-
 		PARAM_LINEAR_LOWER_LIMIT = PhysicsServer3D::G6DOF_JOINT_LINEAR_LOWER_LIMIT,
 		PARAM_LINEAR_UPPER_LIMIT = PhysicsServer3D::G6DOF_JOINT_LINEAR_UPPER_LIMIT,
 		PARAM_LINEAR_LIMIT_SOFTNESS = PhysicsServer3D::G6DOF_JOINT_LINEAR_LIMIT_SOFTNESS,

@@ -46,7 +46,7 @@
 #include "main/main.h"
 #include "platform/windows/display_server_windows.h"
 #include "servers/audio_server.h"
-#include "servers/rendering/rendering_server_raster.h"
+#include "servers/rendering/rendering_server_default.h"
 #include "servers/rendering/rendering_server_wrap_mt.h"
 #include "windows_terminal_logger.h"
 
@@ -466,8 +466,10 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 	ERR_FAIL_COND_V(ret == 0, ERR_CANT_FORK);
 
 	if (p_blocking) {
-		DWORD ret2 = WaitForSingleObject(pi.pi.hProcess, INFINITE);
+		WaitForSingleObject(pi.pi.hProcess, INFINITE);
 		if (r_exitcode) {
+			DWORD ret2;
+			GetExitCodeProcess(pi.pi.hProcess, &ret2);
 			*r_exitcode = ret2;
 		}
 

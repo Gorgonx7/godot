@@ -42,27 +42,6 @@
 typedef void (*VariantFunc)(Variant &r_ret, Variant &p_self, const Variant **p_args);
 typedef void (*VariantConstructFunc)(Variant &r_ret, const Variant **p_args);
 
-template <class T>
-struct TypeAdjust {
-	_FORCE_INLINE_ static void adjust(Variant *r_ret) {
-		VariantTypeChanger<typename GetSimpleTypeT<T>::type_t>::change(r_ret);
-	}
-};
-
-template <> //do nothing for variant
-struct TypeAdjust<Variant> {
-	_FORCE_INLINE_ static void adjust(Variant *r_ret) {
-	}
-};
-
-template <> //do nothing for variant
-struct TypeAdjust<Object *> {
-	_FORCE_INLINE_ static void adjust(Variant *r_ret) {
-		VariantInternal::clear(r_ret);
-		*r_ret = (Object *)nullptr;
-	}
-};
-
 template <class R, class T, class... P>
 static _FORCE_INLINE_ void vc_method_call(R (T::*method)(P...), Variant *base, const Variant **p_args, int p_argcount, Variant &r_ret, const Vector<Variant> &p_defvals, Callable::CallError &r_error) {
 	call_with_variant_args_ret_dv(VariantGetInternalPtr<T>::get_ptr(base), method, p_args, p_argcount, r_ret, r_error, p_defvals);
@@ -120,6 +99,31 @@ static _FORCE_INLINE_ void vc_ptrcall(void (T::*method)(P...), void *p_base, con
 template <class T, class... P>
 static _FORCE_INLINE_ void vc_ptrcall(void (T::*method)(P...) const, void *p_base, const void **p_args, void *r_ret) {
 	call_with_ptr_argsc(reinterpret_cast<T *>(p_base), method, p_args);
+}
+
+template <class R, class T, class... P>
+static _FORCE_INLINE_ void vc_change_return_type(R (T::*method)(P...), Variant *v) {
+	VariantTypeAdjust<R>::adjust(v);
+}
+
+template <class R, class T, class... P>
+static _FORCE_INLINE_ void vc_change_return_type(R (T::*method)(P...) const, Variant *v) {
+	VariantTypeAdjust<R>::adjust(v);
+}
+
+template <class T, class... P>
+static _FORCE_INLINE_ void vc_change_return_type(void (T::*method)(P...), Variant *v) {
+	VariantInternal::clear(v);
+}
+
+template <class T, class... P>
+static _FORCE_INLINE_ void vc_change_return_type(void (T::*method)(P...) const, Variant *v) {
+	VariantInternal::clear(v);
+}
+
+template <class R, class... P>
+static _FORCE_INLINE_ void vc_change_return_type(R (*method)(P...), Variant *v) {
+	VariantTypeAdjust<R>::adjust(v);
 }
 
 template <class R, class T, class... P>
@@ -258,7 +262,7 @@ static _FORCE_INLINE_ Variant::Type vc_get_base_type(void (T::*method)(P...) con
 			vc_method_call(m_method_ptr, base, p_args, p_argcount, r_ret, p_defvals, r_error);                                                                    \
 		}                                                                                                                                                         \
 		static void validated_call(Variant *base, const Variant **p_args, int p_argcount, Variant *r_ret) {                                                       \
-			TypeAdjust<m_class>::adjust(r_ret);                                                                                                                   \
+			vc_change_return_type(m_method_ptr, r_ret);                                                                                                           \
 			vc_validated_call(m_method_ptr, base, p_args, r_ret);                                                                                                 \
 		}                                                                                                                                                         \
 		static void ptrcall(void *p_base, const void **p_args, void *r_ret, int p_argcount) {                                                                     \
@@ -301,7 +305,7 @@ static _FORCE_INLINE_ void vc_ptrcall(R (*method)(T *, P...), void *p_base, cons
 			call_with_variant_args_retc_static_helper_dv(VariantGetInternalPtr<m_class>::get_ptr(base), m_method_ptr, p_args, p_argcount, r_ret, p_defvals, r_error); \
 		}                                                                                                                                                             \
 		static void validated_call(Variant *base, const Variant **p_args, int p_argcount, Variant *r_ret) {                                                           \
-			TypeAdjust<m_class>::adjust(r_ret);                                                                                                                       \
+			vc_change_return_type(m_method_ptr, r_ret);                                                                                                               \
 			call_with_validated_variant_args_static_retc(base, m_method_ptr, p_args, r_ret);                                                                          \
 		}                                                                                                                                                             \
 		static void ptrcall(void *p_base, const void **p_args, void *r_ret, int p_argcount) {                                                                         \
@@ -414,7 +418,7 @@ struct _VariantCall {
 		String s;
 		if (p_instance->size() > 0) {
 			const uint8_t *r = p_instance->ptr();
-			s.parse_utf16((const char16_t *)r, p_instance->size() / 2);
+			s.parse_utf16((const char16_t *)r, floor((double)p_instance->size() / (double)sizeof(char16_t)));
 		}
 		return s;
 	}
@@ -423,7 +427,7 @@ struct _VariantCall {
 		String s;
 		if (p_instance->size() > 0) {
 			const uint8_t *r = p_instance->ptr();
-			s = String((const char32_t *)r, p_instance->size() / 4);
+			s = String((const char32_t *)r, floor((double)p_instance->size() / (double)sizeof(char32_t)));
 		}
 		return s;
 	}
@@ -607,7 +611,6 @@ void Variant::call(const StringName &p_method, const Variant **p_args, int p_arg
 		r_ret = _get_obj().obj->call(p_method, p_args, p_argcount, r_error);
 
 		//else if (type==Variant::METHOD) {
-
 	} else {
 		r_error.error = Callable::CallError::CALL_OK;
 

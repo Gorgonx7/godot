@@ -114,7 +114,12 @@ void SceneTreeDock::_unhandled_key_input(Ref<InputEvent> p_event) {
 		_tool_selected(TOOL_COPY_NODE_PATH);
 	} else if (ED_IS_SHORTCUT("scene_tree/delete", p_event)) {
 		_tool_selected(TOOL_ERASE);
+	} else {
+		return;
 	}
+
+	// Tool selection was successful, accept the event to stop propagation.
+	accept_event();
 }
 
 void SceneTreeDock::instance(const String &p_file) {
@@ -1348,8 +1353,8 @@ void SceneTreeDock::perform_node_renames(Node *p_base, List<Pair<NodePath, NodeP
 							break;
 						}
 
-						// update if the node itself moved up/down the tree hirarchy
-						if (root_path == F->get().first) {
+						// update the node itself if it has a valid node path and has not been deleted
+						if (root_path == F->get().first && p != NodePath() && F->get().second != NodePath()) {
 							NodePath abs_path = NodePath(String(root_path).plus_file(p)).simplified();
 							NodePath rel_path_new = F->get().second.rel_path_to(abs_path);
 
@@ -1989,6 +1994,9 @@ void SceneTreeDock::_do_create(Node *p_parent) {
 		}
 		if (ms.height < 4) {
 			ms.height = 40;
+		}
+		if (ct->is_layout_rtl()) {
+			ct->set_position(ct->get_position() - Vector2(ms.x, 0));
 		}
 		ct->set_size(ms);
 	}
@@ -2824,8 +2832,8 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	HBoxContainer *filter_hbc = memnew(HBoxContainer);
 	filter_hbc->add_theme_constant_override("separate", 0);
 
-	ED_SHORTCUT("scene_tree/rename", TTR("Rename"));
-	ED_SHORTCUT("scene_tree/batch_rename", TTR("Batch Rename"), KEY_MASK_CMD | KEY_F2);
+	ED_SHORTCUT("scene_tree/rename", TTR("Rename"), KEY_F2);
+	ED_SHORTCUT("scene_tree/batch_rename", TTR("Batch Rename"), KEY_MASK_SHIFT | KEY_F2);
 	ED_SHORTCUT("scene_tree/add_child_node", TTR("Add Child Node"), KEY_MASK_CMD | KEY_A);
 	ED_SHORTCUT("scene_tree/instance_scene", TTR("Instance Child Scene"));
 	ED_SHORTCUT("scene_tree/expand_collapse_all", TTR("Expand/Collapse All"));
@@ -2954,6 +2962,7 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	quick_open = memnew(EditorQuickOpen);
 	add_child(quick_open);
 	quick_open->connect("quick_open", callable_mp(this, &SceneTreeDock::_quick_open));
+
 	set_process_unhandled_key_input(true);
 
 	delete_dialog = memnew(ConfirmationDialog);

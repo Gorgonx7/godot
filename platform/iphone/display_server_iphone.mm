@@ -73,7 +73,7 @@ DisplayServerIPhone::DisplayServerIPhone(const String &p_rendering_driver, Displ
 			//        return ERR_UNAVAILABLE;
 		}
 
-		//    rendering_server = memnew(RenderingServerRaster);
+		//    rendering_server = memnew(RenderingServerDefault);
 		//    // FIXME: Reimplement threaded rendering
 		//    if (get_render_thread_mode() != RENDER_THREAD_UNSAFE) {
 		//        rendering_server = memnew(RenderingServerWrapMT(rendering_server,
@@ -118,7 +118,7 @@ DisplayServerIPhone::DisplayServerIPhone(const String &p_rendering_driver, Displ
 		rendering_device_vulkan = memnew(RenderingDeviceVulkan);
 		rendering_device_vulkan->initialize(context_vulkan);
 
-		RasterizerRD::make_current();
+		RendererCompositorRD::make_current();
 	}
 #endif
 
