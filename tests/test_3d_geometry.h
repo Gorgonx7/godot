@@ -56,11 +56,10 @@ namespace Test3DGeometry {
 		CHECK(c2 == Vector3(7,6,2));
 	}
 	TEST_CASE("[Geometry3D] get_closest_distance_between_segments") {
-		// Tests an invalid triangle returns zero
-		const Vector3 p_from_a = Vector3(5,7,300);
-		const Vector3 p_to_a = Vector3(13,240,26);
-		const Vector3 p_from_b = Vector3(-10,2,1);
-		const Vector3 p_to_b = Vector3(40,500,300);
+		const Vector3 p_from_a = Vector3(5,4,3);
+		const Vector3 p_to_a = Vector3(13,24,26);
+		const Vector3 p_from_b = Vector3(2,2,1);
+		const Vector3 p_to_b = Vector3(4,5,6);
 		float out = Geometry3D::get_closest_distance_between_segments(p_from_a, p_to_a, p_from_b, p_to_b);
 		MESSAGE(out);
 		CHECK(out == 0.0f);
@@ -70,7 +69,6 @@ namespace Test3DGeometry {
 		rng.set_seed(time(0));
 		const Vector3 extents = Vector3(rng.randi(), rng.randi(), rng.randi());
 		Vector<Plane> box = Geometry3D::build_box_planes(extents);
-		CHECK(box.size() == 6);
 		CHECK(extents.x == box[0].d);
 		CHECK(box[0].normal == Vector3(1, 0, 0));
 		CHECK(extents.x == box[1].d);
@@ -91,40 +89,37 @@ namespace Test3DGeometry {
 		int p_lats = 10;
 		Vector3::Axis p_axis = Vector3::Axis();
 		Vector<Plane> capsule = Geometry3D::build_capsule_planes(p_radius, p_height, p_sides, p_lats, p_axis);
-		// Should equal (p_sides * p_lats) * 2 + p_sides
 		CHECK(capsule.size() == 126);
-	}
-	TEST_CASE("[Geometry3D] build_cylinder_planes") {
-		real_t p_radius = 3.0f;
-		real_t p_height = 10.0f;
-		int p_sides = 10;
-		Vector3::Axis p_axis = Vector3::Axis();
-		Vector<Plane> planes = Geometry3D::build_cylinder_planes(p_radius, p_height, p_sides, p_axis);
-		CHECK(&planes != nullptr);
-		//Should equal p_sides + 2
-		CHECK(planes.size() == 12);
-	}
-	TEST_CASE("[Geometry3D] build_sphere_planes") {
-		real_t p_radius = 10.0f;
-		int p_lats = 10;
-		int p_lons = 3;
-		Vector3::Axis p_axis = Vector3::Axis();
-		Vector<Plane> planes = Geometry3D::build_sphere_planes(p_radius, p_lats, p_lons, p_axis);
-		CHECK(&planes != nullptr);
-		CHECK(planes.size() == 63);
+		
 	}
 	TEST_CASE("[Geometry3D] build_convex_mesh") {
 		const Vector3 extents = Vector3(5, 10, 5);
 		Vector<Plane> box = Geometry3D::build_box_planes(extents);
 		Geometry3D::MeshData mesh = Geometry3D::build_convex_mesh(box);
 		CHECK(&mesh != nullptr);
-
+		
+	}
+	TEST_CASE("[Geometry3D] build_cylinder_planes") {
+		real_t p_radius = 0.0f;
+		real_t p_height = 0.0f;
+		int p_sides = 0;
+		Vector3::Axis p_axis = Vector3::Axis();
+		Vector<Plane> planes = Geometry3D::build_cylinder_planes(p_radius, p_height, p_sides, p_axis);
+		CHECK(&planes != nullptr);
+	}
+	TEST_CASE("[Geometry3D] build_sphere_planes") {
+		real_t p_radius = 0.0f;
+		int p_lats = 0;
+		int p_lons = 0;
+		Vector3::Axis p_axis = Vector3::Axis();
+		Vector<Plane> planes = Geometry3D::build_sphere_planes(p_radius, p_lats, p_lons, p_axis);
+		CHECK(&planes != nullptr);
 	}
 	TEST_CASE("[Geometry3D] clip_polygon") {
 		const Vector<Vector3> polygon = Vector<Vector3>();
 		const Plane p_plane = Plane();
 		Vector<Vector3> output = Geometry3D::clip_polygon(polygon, p_plane);
-		CHECK(&output != nullptr);
+		CHECK(&output != nullptr);	
 	}
 	TEST_CASE("[Geometry3D] compute_convex_mesh_points") {
 		const Plane plane = Plane();
