@@ -386,4 +386,3 @@ gcov.css
 
 # https://clangd.llvm.org/ cache folder
 .clangd/
-/ClassDiagram.cd
