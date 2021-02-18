@@ -52,7 +52,7 @@ namespace Test3DGeometry {
 					Name(name), Point1(point1), Point2(point2), Point3(point3), Point4(point4), Want1(want1), Want2(want2) {};
 		};
 		std::vector<Case> tt;
-		tt.push_back(Case("Test small lines", Vector3(1,-1,1),Vector3(1,1,-1),Vector3(-1,-1,-1),Vector3(-1,1,1),Vector3(1,0,0), Vector3(-1,0,0)));
+		tt.push_back(Case("Test small lines", Vector3(1,-1,1),Vector3(1,1,-1),Vector3(-1,-2,-1),Vector3(-1,1,1),Vector3(1,0,0), Vector3(-1,0,0)));
 		
 		for (std::vector<Case>::iterator it = std::begin(tt); it != std::end(tt); ++it) {
 			Geometry3D::get_closest_points_between_segments(it->Point1, it->Point2, it->Point3, it->Point4, it->Got1, it->Got2);
@@ -62,13 +62,22 @@ namespace Test3DGeometry {
 		}
 	}
 	TEST_CASE("[Geometry3D] get_closest_distance_between_segments") {
+		struct Case {
+			String Name;
+			Vector3 Point1, Point2, Point3, Point4;
+			float Want;
+			Case(String name, Vector3 point1, Vector3 point2, Vector3 point3, Vector3 point4, float want) :
+					Name(name), Point1(point1), Point2(point2), Point3(point3), Point4(point4), Want(want) {};
+		};
+		std::vector<Case> tt;
+
 		// Tests an invalid triangle returns zero
-		const Vector3 p_from_a = Vector3(5,7,300);
-		const Vector3 p_to_a = Vector3(13,240,26);
-		const Vector3 p_from_b = Vector3(-10,2,1);
-		const Vector3 p_to_b = Vector3(40,500,300);
+		const Vector3 p_from_a = Vector3(1,1,1);
+		const Vector3 p_to_a = Vector3(-1,-1,-1);
+		const Vector3 p_from_b = Vector3(2,1,2);
+		const Vector3 p_to_b = Vector3(3,1,2);
 		float out = Geometry3D::get_closest_distance_between_segments(p_from_a, p_to_a, p_from_b, p_to_b);
-		CHECK(out == 0.0f);
+		CHECK(out == 10.0f);
 	}
 	TEST_CASE("[Geometry3D] build_box_planes") {
 		RandomNumberGenerator rng = RandomNumberGenerator();
@@ -200,8 +209,8 @@ namespace Test3DGeometry {
 	TEST_CASE("[Geometry3D] segment_intersects_convex") {
 		const Vector3 p_from = Vector3();
 		const Vector3 p_to = Vector3();
-		const Plane *p_planes;
-		int p_plane_count;
+		const Plane *p_planes = {};
+		int p_plane_count = 10;
 		Vector3 *p_res = new Vector3();
 		Vector3 *p_norm = new Vector3();
 		bool output = Geometry3D::segment_intersects_convex(p_from, p_to, p_planes, p_plane_count, p_res, p_norm);
@@ -291,7 +300,7 @@ namespace Test3DGeometry {
 	}
 	TEST_CASE("[Geometry3D] wrap_geometry") {
 		Vector<Face3> p_array;
-		real_t *p_error;
+		real_t *p_error = {};
 		Vector<Face3> output = Geometry3D::wrap_geometry(p_array, p_error);
 		CHECK(&output != nullptr);
 	}
