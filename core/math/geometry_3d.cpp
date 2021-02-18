@@ -35,18 +35,21 @@
 #include "thirdparty/misc/clipper.hpp"
 #include "thirdparty/misc/triangulator.h"
 
+
+
 void Geometry3D::MeshData::optimize_vertices() {
-	Map<int, int> vtx_remap;
+	Map<int, int> index_remap;
 
 	for (int i = 0; i < faces.size(); i++) {
 		for (int j = 0; j < faces[i].indices.size(); j++) {
-			int idx = faces[i].indices[j];
-			if (!vtx_remap.has(idx)) {
-				int ni = vtx_remap.size();
-				vtx_remap[idx] = ni;
+			int index = faces[i].indices[j];
+			if (!index_remap.has(index)) {
+				//Get current size of map and increment it by 1 creating a new indicies for the vertex
+				int map_size = index_remap.size();
+				index_remap[index] = map_size;
 			}
 
-			faces.write[i].indices.write[j] = vtx_remap[idx];
+			faces.write[i].indices.write[j] = index_remap[index];
 		}
 	}
 
@@ -54,25 +57,25 @@ void Geometry3D::MeshData::optimize_vertices() {
 		int a = edges[i].a;
 		int b = edges[i].b;
 
-		if (!vtx_remap.has(a)) {
-			int ni = vtx_remap.size();
-			vtx_remap[a] = ni;
+		if (!index_remap.has(a)) {
+			int map_size = index_remap.size();
+			index_remap[a] = map_size;
 		}
-		if (!vtx_remap.has(b)) {
-			int ni = vtx_remap.size();
-			vtx_remap[b] = ni;
+		if (!index_remap.has(b)) {
+			int map_size = index_remap.size();
+			index_remap[b] = map_size;
 		}
 
-		edges.write[i].a = vtx_remap[a];
-		edges.write[i].b = vtx_remap[b];
+		edges.write[i].a = index_remap[a];
+		edges.write[i].b = index_remap[b];
 	}
 
 	Vector<Vector3> new_vertices;
-	new_vertices.resize(vtx_remap.size());
+	new_vertices.resize(index_remap.size());
 
 	for (int i = 0; i < vertices.size(); i++) {
-		if (vtx_remap.has(i)) {
-			new_vertices.write[vtx_remap[i]] = vertices[i];
+		if (index_remap.has(i)) {
+			new_vertices.write[index_remap[i]] = vertices[i];
 		}
 	}
 	vertices = new_vertices;
@@ -434,7 +437,7 @@ static inline void _build_faces(uint8_t ***p_cell_status, int x, int y, int z, i
 		return;
 	}
 
-#define vert(m_idx) Vector3(((m_idx)&4) >> 2, ((m_idx)&2) >> 1, (m_idx)&1)
+#define vert(m_index) Vector3(((m_index)&4) >> 2, ((m_index)&2) >> 1, (m_index)&1)
 
 	static const uint8_t indices[6][4] = {
 		{ 7, 6, 4, 5 },
@@ -712,20 +715,20 @@ Geometry3D::MeshData Geometry3D::build_convex_mesh(const Vector<Plane> &p_planes
 
 		// Add face indices.
 		for (int j = 0; j < vertices.size(); j++) {
-			int idx = -1;
+			int index = -1;
 			for (int k = 0; k < mesh.vertices.size(); k++) {
 				if (mesh.vertices[k].distance_to(vertices[j]) < 0.001) {
-					idx = k;
+					index = k;
 					break;
 				}
 			}
 
-			if (idx == -1) {
-				idx = mesh.vertices.size();
+			if (index == -1) {
+				index = mesh.vertices.size();
 				mesh.vertices.push_back(vertices[j]);
 			}
 
-			face.indices.push_back(idx);
+			face.indices.push_back(index);
 		}
 		face.plane = p;
 		mesh.faces.push_back(face);

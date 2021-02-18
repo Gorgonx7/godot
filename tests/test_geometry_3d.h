@@ -37,6 +37,7 @@
 #include "tests/test_macros.h"
 #include "core/math/plane.h"
 #include "core/math/random_number_generator.h"
+#include "vector"
 namespace Test3DGeometry {
 	/// <summary>
 	/// Static maths function tests
@@ -62,7 +63,6 @@ namespace Test3DGeometry {
 		const Vector3 p_from_b = Vector3(-10,2,1);
 		const Vector3 p_to_b = Vector3(40,500,300);
 		float out = Geometry3D::get_closest_distance_between_segments(p_from_a, p_to_a, p_from_b, p_to_b);
-		MESSAGE(out);
 		CHECK(out == 0.0f);
 	}
 	TEST_CASE("[Geometry3D] build_box_planes") {
@@ -247,11 +247,24 @@ namespace Test3DGeometry {
 		CHECK(&output != nullptr);
 	}
 	TEST_CASE("[Geometry3D] triangle_box_overlap") {
-		const Vector3 boxcenter = Vector3();
-		const Vector3 boxhalfsize = Vector3();
-		const Vector3 *triverts = new Vector3();
-		bool output = Geometry3D::triangle_box_overlap(boxcenter, boxhalfsize, triverts);
-		CHECK(&output != nullptr);
+		struct Case {
+			String Name;
+			Vector3 Boxcenter;
+			Vector3 Boxhalfsize;
+			Vector3 * Triverts;
+			bool Want;
+			Case(String name, Vector3 center, Vector3 halfsize, Vector3 *verts, bool w) :
+					Name(name), Boxcenter(center), Boxhalfsize(halfsize), Triverts(verts), Want(w){};
+		};
+		std::vector<Case> tt = std::vector<Case>();
+		Vector3 GoodTriangle[3] = { Vector3(3,2,3), Vector3(2,2,1), Vector3(2,1,1) };
+		tt.push_back(Case("Test triangle in box is found", Vector3(0,0,0), Vector3(5,5,5), GoodTriangle, true));
+		Vector3 BadTriangle[3] = { Vector3(100,100,100), Vector3(-100,-100,-100), Vector3(10,10,10) };
+		tt.push_back(Case("Test triangle in box is found", Vector3(1000,1000,1000), Vector3(1,1,1), BadTriangle, false));
+		for (std::vector<Case>::iterator it = std::begin(tt); it != std::end(tt); ++it) {
+			bool output = Geometry3D::triangle_box_overlap(it->Boxcenter, it->Boxhalfsize, it->Triverts);
+			CHECK(output == it->Want);
+		}
 	}
 	TEST_CASE("[Geometry3D] triangle_get_barycentric_coords") {
 		const Vector3 p_a = Vector3();

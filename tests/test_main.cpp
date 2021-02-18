@@ -67,7 +67,7 @@
 #include "test_text_server.h"
 #include "test_validate_testing.h"
 #include "test_variant.h"
-#include "test_3d_geometry.h"
+#include "test_geometry_3d.h"
 #include "modules/modules_tests.gen.h"
 
 #include "tests/test_macros.h"
