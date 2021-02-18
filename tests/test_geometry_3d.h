@@ -43,18 +43,23 @@ namespace Test3DGeometry {
 	/// Static maths function tests
 	/// </summary>
 	TEST_CASE("[Geometry3D] get_closest_points_between_segments") {
-		const Vector3 p1 = Vector3(5, 7, 2);
-		const Vector3 p2 = Vector3(3, 8, 1);
-		const Vector3 q1 = Vector3(2, 3, 1);
-		const Vector3 q2 = Vector3(8, 7, 2);
-		Vector3 c1 = Vector3();
-		Vector3 c2 = Vector3();
-		Geometry3D::get_closest_points_between_segments(p1, p2, q1, q2, c1, c2);
-		MESSAGE(c1);
-		MESSAGE(c2);
-		CHECK(c1 == Vector3(5, 7, 2));
-		c2 = Vector3(round(c2.x), round(c2.y), round(c2.z));
-		CHECK(c2 == Vector3(7,6,2));
+		struct Case {
+			String Name;
+			Vector3 Point1, Point2, Point3, Point4;
+			Vector3 Got1, Got2;
+			Vector3 Want1, Want2;
+			Case(String name, Vector3 point1, Vector3 point2, Vector3 point3, Vector3 point4, Vector3 want1, Vector3 want2) :
+					Name(name), Point1(point1), Point2(point2), Point3(point3), Point4(point4), Want1(want1), Want2(want2) {};
+		};
+		std::vector<Case> tt;
+		tt.push_back(Case("Test small lines", Vector3(1,-1,1),Vector3(1,1,-1),Vector3(-1,-1,-1),Vector3(-1,1,1),Vector3(1,0,0), Vector3(-1,0,0)));
+		
+		for (std::vector<Case>::iterator it = std::begin(tt); it != std::end(tt); ++it) {
+			Geometry3D::get_closest_points_between_segments(it->Point1, it->Point2, it->Point3, it->Point4, it->Got1, it->Got2);
+
+			CHECK(it->Got1 == it->Want1);
+			CHECK(it->Got2 == it->Want2);
+		}
 	}
 	TEST_CASE("[Geometry3D] get_closest_distance_between_segments") {
 		// Tests an invalid triangle returns zero
