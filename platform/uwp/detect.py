@@ -68,7 +68,7 @@ def configure(env):
         if env["optimize"] != "none":
             env.Append(CCFLAGS=["/O2", "/Zi"])
 
-    elif env["target"] == "debug":
+    elif env["target"] == "debug" or env["target"] == "debug_test":
         env.Append(CCFLAGS=["/Zi"])
         env.Append(CCFLAGS=["/MDd"])
         env.Append(CPPDEFINES=["DEBUG_ENABLED"])

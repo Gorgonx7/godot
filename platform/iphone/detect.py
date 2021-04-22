@@ -61,7 +61,7 @@ def configure(env):
         if env["target"] == "release_debug":
             env.Append(CPPDEFINES=["DEBUG_ENABLED"])
 
-    elif env["target"] == "debug":
+    elif env["target"] == "debug" or env["target"] == "debug_test":
         env.Append(CCFLAGS=["-gdwarf-2", "-O0"])
         env.Append(CPPDEFINES=["_DEBUG", ("DEBUG", 1), "DEBUG_ENABLED"])
 

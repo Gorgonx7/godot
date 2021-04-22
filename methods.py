@@ -678,11 +678,18 @@ def generate_vs_project(env, num_jobs):
         debug_variants = ["debug|Win32"] + ["debug|x64"]
         release_variants = ["release|Win32"] + ["release|x64"]
         release_debug_variants = ["release_debug|Win32"] + ["release_debug|x64"]
-        variants = debug_variants + release_variants + release_debug_variants
+        debug_test_variants = ["debug_test|Win32"] + ["debug|x64"]
+        variants = debug_variants + debug_test_variants + release_variants + release_debug_variants
         debug_targets = ["bin\\godot.windows.tools.32.exe"] + ["bin\\godot.windows.tools.64.exe"]
         release_targets = ["bin\\godot.windows.opt.32.exe"] + ["bin\\godot.windows.opt.64.exe"]
         release_debug_targets = ["bin\\godot.windows.opt.tools.32.exe"] + ["bin\\godot.windows.opt.tools.64.exe"]
-        targets = debug_targets + release_targets + release_debug_targets
+        debug_test_targets = ["bin\\godot.windows.tools.32.exe"] + ["bin\\godot.windows.tools.64.exe"]
+        targets = debug_targets + debug_test_targets + release_targets + release_debug_targets
+        debug_args = [""] + [""]
+        debug_test_args = ["test=yes"] + ["test=yes"]
+        release_args = [""] + [""]
+        release_debug_args = [""] + [""]
+        additional_args = debug_args + debug_test_args + release_args + release_debug_args
         if not env.get("MSVS"):
             env["MSVS"]["PROJECTSUFFIX"] = ".vcxproj"
             env["MSVS"]["SOLUTIONSUFFIX"] = ".sln"
@@ -694,6 +701,7 @@ def generate_vs_project(env, num_jobs):
             buildtarget=targets,
             auto_build_solution=1,
             variant=variants,
+            cmdargs=additional_args,
         )
     else:
         print("Could not locate Visual Studio batch file to set up the build environment. Not generating VS project.")
