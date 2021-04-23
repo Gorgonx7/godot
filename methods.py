@@ -59,13 +59,14 @@ def disable_warnings(self):
 def add_module_version_string(self, s):
     self.module_version_string += "." + s
 
-
-def update_version(module_version_string=""):
-
+def get_build_name():
     build_name = "custom_build"
     if os.getenv("BUILD_NAME") != None:
         build_name = os.getenv("BUILD_NAME")
         print("Using custom build name: " + build_name)
+    return build_name
+
+def write_version_file():
 
     import version
 
@@ -80,26 +81,24 @@ def update_version(module_version_string=""):
     f.write("#define VERSION_MINOR " + str(version.minor) + "\n")
     f.write("#define VERSION_PATCH " + str(version.patch) + "\n")
     f.write('#define VERSION_STATUS "' + str(version.status) + '"\n')
-    f.write('#define VERSION_BUILD "' + str(build_name) + '"\n')
+    f.write('#define VERSION_BUILD "' + str(get_build_name()) + '"\n')
     f.write('#define VERSION_MODULE_CONFIG "' + str(version.module_config) + module_version_string + '"\n')
     f.write("#define VERSION_YEAR " + str(version.year) + "\n")
     f.write('#define VERSION_WEBSITE "' + str(version.website) + '"\n')
     f.write("#endif // VERSION_GENERATED_GEN_H\n")
     f.close()
 
-    # NOTE: It is safe to generate this file here, since this is still executed serially
-    fhash = open("core/version_hash.gen.h", "w")
-    fhash.write("/* THIS FILE IS GENERATED DO NOT EDIT */\n")
-    fhash.write("#ifndef VERSION_HASH_GEN_H\n")
-    fhash.write("#define VERSION_HASH_GEN_H\n")
-    githash = ""
+def get_git_folder():
     gitfolder = ".git"
-
     if os.path.isfile(".git"):
         module_folder = open(".git", "r").readline().strip()
         if module_folder.startswith("gitdir: "):
             gitfolder = module_folder[8:]
+    return gitfolder
 
+def get_version_hash():
+    gitfolder = get_git_folder()
+    githash = ""
     if os.path.isfile(os.path.join(gitfolder, "HEAD")):
         head = open(os.path.join(gitfolder, "HEAD"), "r", encoding="utf8").readline().strip()
         if head.startswith("ref: "):
@@ -108,11 +107,21 @@ def update_version(module_version_string=""):
                 githash = open(head, "r").readline().strip()
         else:
             githash = head
+    return githash
 
-    fhash.write('#define VERSION_HASH "' + githash + '"\n')
-    fhash.write("#endif // VERSION_HASH_GEN_H\n")
-    fhash.close()
+def write_version_hash_file():
+    # NOTE: It is safe to generate this file here, since this is still executed serially
+    f = open("core/version_hash.gen.h", "w")
+    f.write("/* THIS FILE IS GENERATED DO NOT EDIT */\n")
+    f.write("#ifndef VERSION_HASH_GEN_H\n")
+    f.write("#define VERSION_HASH_GEN_H\n")
+    f.write('#define VERSION_HASH "' + get_version_hash() + '"\n')
+    f.write("#endif // VERSION_HASH_GEN_H\n")
+    f.close()
 
+def update_version(module_version_string=""):
+    write_version_file()
+    write_version_hash_file()
 
 def parse_cg_file(fname, uniforms, sizes, conditionals):
 
