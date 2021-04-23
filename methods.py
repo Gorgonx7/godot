@@ -66,7 +66,7 @@ def get_build_name():
         print("Using custom build name: " + build_name)
     return build_name
 
-def write_version_file():
+def write_version_file(module_version_string):
 
     import version
 
@@ -120,7 +120,7 @@ def write_version_hash_file():
     f.close()
 
 def update_version(module_version_string=""):
-    write_version_file()
+    write_version_file(module_version_string)
     write_version_hash_file()
 
 def parse_cg_file(fname, uniforms, sizes, conditionals):
