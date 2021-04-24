@@ -57,18 +57,13 @@ class test_add_source_files(unittest.TestCase):
         self.assertTrue(sources[1] in testOBJ)
 
 class test_update_version(unittest.TestCase):
-    #@patch('builtins.open')
-    #@patch('builtins.print')
-    #def test_custom_build_name(self, mock_print, mock_open):
-    #    os.environ["BUILD_NAME"] = "CustomBuildName"
-    #    methods.update_version()
-    #    mock_print.assert_called_with("Using custom build name: " + "CustomBuildName")
     @patch('methods.write_version_file')
     @patch('methods.write_version_hash_file')
     def test_version_generated(self, mock_version_hash_file, mock_write_version_file):
         methods.update_version()
         mock_version_hash_file.assert_called_once()
         mock_write_version_file.assert_called_once()
+
     @patch('methods.get_version_hash')
     def test_write_version_hash_file(self, mock_get_version_hash):
         mock_get_version_hash.side_effect = ["test"]
@@ -83,6 +78,98 @@ class test_update_version(unittest.TestCase):
                  call('#define VERSION_HASH "' + "test" + '"\n'),
                  call("#endif // VERSION_HASH_GEN_H\n")]
         handle.write.assert_has_calls(calls)
+
+    def test_get_git_folder(self):
+        folder = methods.get_git_folder()
+        self.assertEqual(folder, ".git")
+
+    @patch('os.path.isfile')
+    def test_get_git_folder(self, mock_is_file): 
+        mock_is_file.side_effect = [True]
+        with patch('builtins.open', unittest.mock.mock_open(read_data='gitdir: .gitfolder')) as m:
+            folder = methods.get_git_folder()
+        self.assertEqual(folder, ".gitfolder")
+
+    @patch('methods.get_git_folder')
+    @patch('methods.read_first_line')
+    @patch('os.path.isfile')
+    def test_get_version_hash_ref(self, mock_is_file, mock_first_line, mock_get_git_folder):
+        mock_is_file.side_effect = [True, True]
+        mock_first_line.side_effect = ["ref: fake/ref/directory", "fakeHash"]
+        hash = methods.get_version_hash()
+        self.assertEqual(hash, "fakeHash")
+
+    @patch('methods.get_git_folder')
+    @patch('methods.read_first_line')
+    @patch('os.path.isfile')
+    def test_get_version_hash_ref(self, mock_is_file, mock_first_line, mock_get_git_folder):
+        mock_is_file.side_effect = [True]
+        mock_first_line.side_effect = ["fake/ref/directory"]
+        hash = methods.get_version_hash()
+        self.assertEqual(hash, "fake/ref/directory")
+
+    @patch('methods.get_git_folder')
+    @patch('os.path.isfile')
+    def test_get_version_hash_ref(self, mock_is_file, mock_get_git_folder):
+        mock_is_file.side_effect = [False]
+        hash = methods.get_version_hash()
+        self.assertEqual(hash, "")
+
+    @patch('methods.get_git_folder')
+    @patch('methods.read_first_line')
+    @patch('os.path.isfile')
+    def test_get_version_hash_hash_file_not_exists(self, mock_is_file, mock_first_line, mock_get_git_folder):
+        mock_is_file.side_effect = [True, False]
+        mock_first_line.side_effect = ["ref: fake/ref/directory"]
+        hash = methods.get_version_hash()
+        self.assertEqual(hash, "")
+
+    def test_read_first_line(self):
+        with patch('builtins.open', unittest.mock.mock_open(read_data='gitdir: .gitfolder')) as m:
+            head = methods.read_first_line("test_path")
+            self.assertEqual(head,'gitdir: .gitfolder')
+
+    @patch('builtins.print')
+    @patch('os.getenv')
+    def test_custom_build_name(self, mock_get_env, mock_print):
+        custom_name = "CustomeBuildName"
+        mock_get_env.side_effect = [custom_name]
+        build_name = methods.get_build_name()
+        mock_print.assert_called_with("Using custom build name: " + custom_name)
+        self.assertEqual(build_name, custom_name)
+
+    @patch('os.getenv')
+    def test_custom_build_name(self, mock_get_env):
+        mock_get_env.side_effect = [None]
+        build_name = methods.get_build_name()
+        self.assertEqual(build_name, "custom_build")
+    @patch('methods.get_build_name')
+    def test_write_version_file(self, mock_get_build_name):
+        mock_get_build_name.side_effect = ["test_name"]
+        version_name = "test_version"
+        import version
+        with patch('builtins.open', unittest.mock.mock_open()) as m:
+            methods.write_version_file(version_name)
+
+        m.assert_called_with("core/version_generated.gen.h", "w")
+        
+        handler = m()
+        calls = [call("/* THIS FILE IS GENERATED DO NOT EDIT */\n"),
+                 call("#ifndef VERSION_GENERATED_GEN_H\n"),
+                 call("#define VERSION_GENERATED_GEN_H\n"),
+                 call('#define VERSION_SHORT_NAME "' + str(version.short_name) + '"\n'),
+                 call('#define VERSION_NAME "' + str(version.name) + '"\n'),
+                 call("#define VERSION_MAJOR " + str(version.major) + "\n"),
+                 call("#define VERSION_MINOR " + str(version.minor) + "\n"),
+                 call("#define VERSION_PATCH " + str(version.patch) + "\n"),
+                 call('#define VERSION_STATUS "' + str(version.status) + '"\n'),
+                 call('#define VERSION_BUILD "' + "test_name" + '"\n'),
+                 call('#define VERSION_MODULE_CONFIG "' + str(version.module_config) + version_name + '"\n'),
+                 call("#define VERSION_YEAR " + str(version.year) + "\n"),
+                 call('#define VERSION_WEBSITE "' + str(version.website) + '"\n'),
+                 call("#endif // VERSION_GENERATED_GEN_H\n")]
+        handler.close.assert_called_once()
+        handler.write.assert_has_calls(calls)
         
 
         

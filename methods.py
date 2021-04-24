@@ -60,11 +60,11 @@ def add_module_version_string(self, s):
     self.module_version_string += "." + s
 
 def get_build_name():
-    build_name = "custom_build"
-    if os.getenv("BUILD_NAME") != None:
-        build_name = os.getenv("BUILD_NAME")
+    build_name = os.getenv("BUILD_NAME")
+    if build_name != None:
         print("Using custom build name: " + build_name)
-    return build_name
+        return build_name
+    return "custom_build"
 
 def write_version_file(module_version_string):
 
@@ -81,7 +81,7 @@ def write_version_file(module_version_string):
     f.write("#define VERSION_MINOR " + str(version.minor) + "\n")
     f.write("#define VERSION_PATCH " + str(version.patch) + "\n")
     f.write('#define VERSION_STATUS "' + str(version.status) + '"\n')
-    f.write('#define VERSION_BUILD "' + str(get_build_name()) + '"\n')
+    f.write('#define VERSION_BUILD "' + get_build_name() + '"\n')
     f.write('#define VERSION_MODULE_CONFIG "' + str(version.module_config) + module_version_string + '"\n')
     f.write("#define VERSION_YEAR " + str(version.year) + "\n")
     f.write('#define VERSION_WEBSITE "' + str(version.website) + '"\n')
@@ -91,20 +91,28 @@ def write_version_file(module_version_string):
 def get_git_folder():
     gitfolder = ".git"
     if os.path.isfile(".git"):
-        module_folder = open(".git", "r").readline().strip()
+        module_folder_file = open(".git", "r")
+        module_folder = module_folder_file.readline().strip()
+        module_folder_file.close()
         if module_folder.startswith("gitdir: "):
             gitfolder = module_folder[8:]
     return gitfolder
 
+def read_first_line(path):
+    headfile = open(path, "r", encoding="utf8")
+    head = headfile.readline().strip()
+    headfile.close()
+    return head
+
 def get_version_hash():
-    gitfolder = get_git_folder()
+    gitfolder = get_git_folder() 
     githash = ""
     if os.path.isfile(os.path.join(gitfolder, "HEAD")):
-        head = open(os.path.join(gitfolder, "HEAD"), "r", encoding="utf8").readline().strip()
+        head = read_first_line(os.path.join(gitfolder, "HEAD"))
         if head.startswith("ref: "):
             head = os.path.join(gitfolder, head[5:])
             if os.path.isfile(head):
-                githash = open(head, "r").readline().strip()
+                githash = read_first_line(head)
         else:
             githash = head
     return githash
@@ -687,18 +695,11 @@ def generate_vs_project(env, num_jobs):
         debug_variants = ["debug|Win32"] + ["debug|x64"]
         release_variants = ["release|Win32"] + ["release|x64"]
         release_debug_variants = ["release_debug|Win32"] + ["release_debug|x64"]
-        debug_test_variants = ["debug_test|Win32"] + ["debug|x64"]
-        variants = debug_variants + debug_test_variants + release_variants + release_debug_variants
+        variants = debug_variants + release_variants + release_debug_variants
         debug_targets = ["bin\\godot.windows.tools.32.exe"] + ["bin\\godot.windows.tools.64.exe"]
         release_targets = ["bin\\godot.windows.opt.32.exe"] + ["bin\\godot.windows.opt.64.exe"]
         release_debug_targets = ["bin\\godot.windows.opt.tools.32.exe"] + ["bin\\godot.windows.opt.tools.64.exe"]
-        debug_test_targets = ["bin\\godot.windows.tools.32.exe"] + ["bin\\godot.windows.tools.64.exe"]
-        targets = debug_targets + debug_test_targets + release_targets + release_debug_targets
-        debug_args = [""] + [""]
-        debug_test_args = ["test=yes"] + ["test=yes"]
-        release_args = [""] + [""]
-        release_debug_args = [""] + [""]
-        additional_args = debug_args + debug_test_args + release_args + release_debug_args
+        targets = debug_targets  + release_targets + release_debug_targets
         if not env.get("MSVS"):
             env["MSVS"]["PROJECTSUFFIX"] = ".vcxproj"
             env["MSVS"]["SOLUTIONSUFFIX"] = ".sln"
@@ -710,7 +711,6 @@ def generate_vs_project(env, num_jobs):
             buildtarget=targets,
             auto_build_solution=1,
             variant=variants,
-            cmdargs=additional_args,
         )
     else:
         print("Could not locate Visual Studio batch file to set up the build environment. Not generating VS project.")

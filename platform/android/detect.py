@@ -206,7 +206,7 @@ def configure(env):
             env.Append(CCFLAGS=["-ftree-vectorize"])
         if env["target"] == "release_debug":
             env.Append(CPPDEFINES=["DEBUG_ENABLED"])
-    elif env["target"] == "debug" or env["target"] == "debug_test":
+    elif env["target"] == "debug":
         env.Append(LINKFLAGS=["-O0"])
         env.Append(CCFLAGS=["-O0", "-g", "-fno-limit-debug-info"])
         env.Append(CPPDEFINES=["_DEBUG", "DEBUG_ENABLED"])

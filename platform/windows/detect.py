@@ -362,7 +362,7 @@ def configure_mingw(env):
         else:  # optimize for size
             env.Prepend(CCFLAGS=["-Os"])
 
-    elif env["target"] == "debug" or env["target"] == "debug_test":
+    elif env["target"] == "debug":
         env.Append(CCFLAGS=["-g3"])
         env.Append(CPPDEFINES=["DEBUG_ENABLED"])
 

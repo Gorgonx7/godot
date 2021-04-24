@@ -72,7 +72,7 @@ def configure(env):
         if env["debug_symbols"]:
             env.Prepend(CCFLAGS=["-g2"])
 
-    elif env["target"] == "debug" or env["target"] == "debug_test":
+    elif env["target"] == "debug":
         env.Prepend(CCFLAGS=["-g3"])
         env.Prepend(CPPDEFINES=["DEBUG_ENABLED"])
         env.Append(LINKFLAGS=["-rdynamic"])
