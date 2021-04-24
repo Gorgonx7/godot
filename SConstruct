@@ -345,7 +345,7 @@ if selected_platform in platform_list:
         env["use_static_cpp"] = methods.get_cmdline_bool("use_static_cpp", True)
         env["use_lto"] = methods.get_cmdline_bool("use_lto", True)
         env["debug_symbols"] = methods.get_cmdline_bool("debug_symbols", False)
-        if not env["tools"] and (env["target"] == "debug"):
+        if not env["tools"] and env["target"] == "debug":
             print(
                 "WARNING: Requested `production` build with `tools=no target=debug`, "
                 "this will give you a full debug template (use `target=release_debug` "

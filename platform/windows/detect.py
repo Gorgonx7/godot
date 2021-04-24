@@ -206,7 +206,7 @@ def configure_msvc(env, manual_msvc_config):
             env.Append(LINKFLAGS=["/OPT:REF"])
         env.AppendUnique(CPPDEFINES=["DEBUG_ENABLED"])
 
-    elif env["target"] == "debug" or env["target"] == "debug_target":
+    elif env["target"] == "debug":
         env.AppendUnique(CCFLAGS=["/Zi", "/FS", "/Od", "/EHsc"])
         env.AppendUnique(CPPDEFINES=["DEBUG_ENABLED"])
         env.Append(LINKFLAGS=["/DEBUG"])
