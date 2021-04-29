@@ -112,7 +112,7 @@ opts = Variables(customs, ARGUMENTS)
 opts.Add("p", "Platform (alias for 'platform')", "")
 opts.Add("platform", "Target platform (%s)" % ("|".join(platform_list),), "")
 opts.Add(BoolVariable("tools", "Build the tools (a.k.a. the Godot editor)", True))
-opts.Add(EnumVariable("target", "Compilation target", "debug", ("debug", "debug_test", "release_debug", "release")))
+opts.Add(EnumVariable("target", "Compilation target", "debug", ("debug", "release_debug", "release")))
 opts.Add("arch", "Platform-dependent architecture (arm/arm64/x86/x64/mips/...)", "")
 opts.Add(EnumVariable("bits", "Target platform bits", "default", ("default", "32", "64")))
 opts.Add(EnumVariable("optimize", "Optimization type", "speed", ("speed", "size", "none")))
@@ -295,7 +295,7 @@ env_base.platform_apis = platform_apis
 if env_base["use_precise_math_checks"]:
     env_base.Append(CPPDEFINES=["PRECISE_MATH_CHECKS"])
 
-if env_base["target"] == "debug" or env_base["target"] == "debug_test":
+if env_base["target"] == "debug":
     env_base.Append(CPPDEFINES=["DEBUG_MEMORY_ALLOC", "DISABLE_FORCED_INLINE"])
 
     # The two options below speed up incremental builds, but reduce the certainty that all files
@@ -345,7 +345,7 @@ if selected_platform in platform_list:
         env["use_static_cpp"] = methods.get_cmdline_bool("use_static_cpp", True)
         env["use_lto"] = methods.get_cmdline_bool("use_lto", True)
         env["debug_symbols"] = methods.get_cmdline_bool("debug_symbols", False)
-        if not env["tools"] and (env["target"] == "debug" or env["target"] == "debug_test"):
+        if not env["tools"] and env["target"] == "debug":
             print(
                 "WARNING: Requested `production` build with `tools=no target=debug`, "
                 "this will give you a full debug template (use `target=release_debug` "

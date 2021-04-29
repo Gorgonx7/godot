@@ -11,7 +11,7 @@ def build_godot_tools(source, target, env):
     module_dir = env["module_dir"]
 
     solution_path = os.path.join(module_dir, "editor/GodotTools/GodotTools.sln")
-    build_config = "Debug" if env["target"] == "debug" or env["target"] == "debug_test" else "Release"
+    build_config = "Debug" if env["target"] == "debug" else "Release"
 
     from .solution_builder import build_solution
 
@@ -29,7 +29,7 @@ def build(env_mono, api_sln_cmd):
 
     target_filenames = ["GodotTools.dll"]
 
-    if env_mono["target"] == "debug" or env_mono["target"] == "debug_test":
+    if env_mono["target"] == "debug":
         target_filenames += ["GodotTools.pdb"]
 
     targets = [os.path.join(editor_tools_dir, filename) for filename in target_filenames]
