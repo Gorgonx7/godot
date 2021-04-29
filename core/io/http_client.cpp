@@ -46,6 +46,24 @@ const char *HTTPClient::_methods[METHOD_MAX] = {
 };
 
 #ifndef JAVASCRIPT_ENABLED
+void HTTPClient::get_host_protocol() {
+	String host_lower = conn_host.to_lower();
+	if (host_lower.begins_with("http://")) {
+		conn_host = conn_host.substr(7, conn_host.length() - 7);
+	} else if (host_lower.begins_with("https://")) {
+		ssl = true;
+		conn_host = conn_host.substr(8, conn_host.length() - 8);
+	}
+}
+void HTTPClient::set_connection_port() {
+	if (conn_port < 0) {
+		if (ssl) {
+			conn_port = PORT_HTTPS;
+		} else {
+			conn_port = PORT_HTTP;
+		}
+	}
+}
 Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, bool p_verify_host) {
 	close();
 
@@ -55,41 +73,32 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 	ssl = p_ssl;
 	ssl_verify_host = p_verify_host;
 
-	String host_lower = conn_host.to_lower();
-	if (host_lower.begins_with("http://")) {
-		conn_host = conn_host.substr(7, conn_host.length() - 7);
-	} else if (host_lower.begins_with("https://")) {
-		ssl = true;
-		conn_host = conn_host.substr(8, conn_host.length() - 8);
-	}
+	get_host_protocol();
 
 	ERR_FAIL_COND_V(conn_host.length() < HOST_MIN_LEN, ERR_INVALID_PARAMETER);
 
-	if (conn_port < 0) {
-		if (ssl) {
-			conn_port = PORT_HTTPS;
-		} else {
-			conn_port = PORT_HTTP;
-		}
-	}
+	set_connection_port();
 
 	connection = tcp_connection;
 
 	if (conn_host.is_valid_ip_address()) {
-		// Host contains valid IP
-		Error err = tcp_connection->connect_to_host(IP_Address(conn_host), p_port);
-		if (err) {
-			status = STATUS_CANT_CONNECT;
-			return err;
-		}
-
-		status = STATUS_CONNECTING;
+		return try_connect(p_port);
 	} else {
 		// Host contains hostname and needs to be resolved to IP
 		resolving = IP::get_singleton()->resolve_hostname_queue_item(conn_host);
 		status = STATUS_RESOLVING;
 	}
 
+	return OK;
+}
+
+Error HTTPClient::try_connect(int p_port) {
+	Error err = tcp_connection->connect_to_host(IP_Address(conn_host), p_port);
+	if (err) {
+		status = STATUS_CANT_CONNECT;
+		return err;
+	}
+	status = STATUS_CONNECTING;
 	return OK;
 }
 
@@ -133,53 +142,29 @@ static bool _check_request_url(HTTPClient::Method p_method, const String &p_url)
 	}
 }
 
-Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector<String> &p_headers, const Vector<uint8_t> &p_body) {
-	ERR_FAIL_INDEX_V(p_method, METHOD_MAX, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V(!_check_request_url(p_method, p_url), ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V(status != STATUS_CONNECTED, ERR_INVALID_PARAMETER);
-	ERR_FAIL_COND_V(connection.is_null(), ERR_INVALID_DATA);
+void HTTPClient::add_clen(String &request, const PackedByteArray &p_body) {
+	request += "Content-Length: " + itos(p_body.size()) + "\r\n";
+	// Should it add utf8 encoding?
+}
 
-	String request = String(_methods[p_method]) + " " + p_url + " HTTP/1.1\r\n";
-	bool add_host = true;
-	bool add_clen = p_body.size() > 0;
-	bool add_uagent = true;
-	bool add_accept = true;
-	for (int i = 0; i < p_headers.size(); i++) {
-		request += p_headers[i] + "\r\n";
-		if (add_host && p_headers[i].findn("Host:") == 0) {
-			add_host = false;
-		}
-		if (add_clen && p_headers[i].findn("Content-Length:") == 0) {
-			add_clen = false;
-		}
-		if (add_uagent && p_headers[i].findn("User-Agent:") == 0) {
-			add_uagent = false;
-		}
-		if (add_accept && p_headers[i].findn("Accept:") == 0) {
-			add_accept = false;
-		}
+void HTTPClient::add_host(String &request) {
+	if ((ssl && conn_port == PORT_HTTPS) || (!ssl && conn_port == PORT_HTTP)) {
+		// Don't append the standard ports
+		request += "Host: " + conn_host + "\r\n";
+	} else {
+		request += "Host: " + conn_host + ":" + itos(conn_port) + "\r\n";
 	}
-	if (add_host) {
-		if ((ssl && conn_port == PORT_HTTPS) || (!ssl && conn_port == PORT_HTTP)) {
-			// Don't append the standard ports
-			request += "Host: " + conn_host + "\r\n";
-		} else {
-			request += "Host: " + conn_host + ":" + itos(conn_port) + "\r\n";
-		}
-	}
-	if (add_clen) {
-		request += "Content-Length: " + itos(p_body.size()) + "\r\n";
-		// Should it add utf8 encoding?
-	}
-	if (add_uagent) {
-		request += "User-Agent: GodotEngine/" + String(VERSION_FULL_BUILD) + " (" + OS::get_singleton()->get_name() + ")\r\n";
-	}
-	if (add_accept) {
-		request += "Accept: */*\r\n";
-	}
-	request += "\r\n";
-	CharString cs = request.utf8();
+}
 
+void HTTPClient::add_uagent(String &request) {
+	request += "User-Agent: GodotEngine/" + String(VERSION_FULL_BUILD) + " (" + OS::get_singleton()->get_name() + ")\r\n";
+}
+
+void HTTPClient::add_accept(String &request) {
+	request += "Accept: */*\r\n";
+}
+
+Vector<uint8_t> HTTPClient::configure_body(CharString &cs) {
 	Vector<uint8_t> data;
 	data.resize(cs.length());
 	{
@@ -188,11 +173,53 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 			data_write[i] = cs[i];
 		}
 	}
+	return data;
+}
 
+void HTTPClient::filter_headers(const PackedStringArray &p_headers, String &request, bool &add_host, bool &add_clen, bool &add_uagent, bool &add_accept) {
+	for (int i = 0; i < p_headers.size(); i++) {
+		request += p_headers[i] + "\r\n";
+		if (add_host && p_headers[i].findn("Host:") == 0)
+			add_host = false;
+		if (add_clen && p_headers[i].findn("Content-Length:") == 0)
+			add_clen = false;
+		if (add_uagent && p_headers[i].findn("User-Agent:") == 0)
+			add_uagent = false;
+		if (add_accept && p_headers[i].findn("Accept:") == 0)
+			add_accept = false;
+	}
+}
+
+void HTTPClient::add_headers(String &request, const PackedByteArray &p_body, bool host_not_defined, bool clen_not_defined, bool uagent_not_defined, bool accept_not_defined) {
+	if (host_not_defined)
+		add_host(request);
+	if (clen_not_defined)
+		add_clen(request, p_body);
+	if (uagent_not_defined)
+		add_uagent(request);
+	if (accept_not_defined)
+		add_accept(request);
+	request += "\r\n";
+}
+
+Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector<String> &p_headers, const Vector<uint8_t> &p_body) {
+	ERR_FAIL_INDEX_V(p_method, METHOD_MAX, ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V(!_check_request_url(p_method, p_url), ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V(status != STATUS_CONNECTED, ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V(connection.is_null(), ERR_INVALID_DATA);
+
+	String request = String(_methods[p_method]) + " " + p_url + " HTTP/1.1\r\n";
+	bool host_not_defined = true;
+	bool clen_not_defined = p_body.size() > 0;
+	bool uagent_not_defined = true;
+	bool accept_not_defined = true;
+	filter_headers(p_headers, request, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
+	add_headers(request, p_body, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
+	Vector<uint8_t> data = configure_body(request.utf8());
+	
 	data.append_array(p_body);
 
-	const uint8_t *r = data.ptr();
-	Error err = connection->put_data(&r[0], data.size());
+	Error err = connection->put_data(&data.ptr()[0], data.size());
 
 	if (err) {
 		close();
@@ -205,6 +232,15 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 
 	return OK;
 }
+
+
+
+
+
+
+
+
+
 
 Error HTTPClient::request(Method p_method, const String &p_url, const Vector<String> &p_headers, const String &p_body) {
 	ERR_FAIL_INDEX_V(p_method, METHOD_MAX, ERR_INVALID_PARAMETER);

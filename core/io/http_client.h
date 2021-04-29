@@ -193,12 +193,24 @@ private:
 	static void _bind_methods();
 
 public:
+	void get_host_protocol();
+	void set_connection_port();
 	Error connect_to_host(const String &p_host, int p_port = -1, bool p_ssl = false, bool p_verify_host = true);
+
+	Error try_connect(int p_port);
 
 	void set_connection(const Ref<StreamPeer> &p_connection);
 	Ref<StreamPeer> get_connection() const;
 
+	void add_uagent(String &request);
+
 	Error request_raw(Method p_method, const String &p_url, const Vector<String> &p_headers, const Vector<uint8_t> &p_body);
+	Vector<uint8_t> configure_body(CharString &cs);
+	void add_headers(String &request, const PackedByteArray &p_body, bool host_not_defined, bool clen_not_defined, bool uagent_not_defined, bool accept_not_defined);
+	void add_accept(String &request);
+	void add_clen(String &request, const PackedByteArray &p_body);
+	void add_host(String &request);
+	void filter_headers(const PackedStringArray &p_headers, String &request, bool &add_host, bool &add_clen, bool &add_uagent, bool &add_accept);
 	Error request(Method p_method, const String &p_url, const Vector<String> &p_headers, const String &p_body = String());
 
 	void close();
