@@ -82,7 +82,7 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 	connection = tcp_connection;
 
 	if (conn_host.is_valid_ip_address()) {
-		return try_connect(p_port);
+		return try_connect(conn_host,p_port);
 	} else {
 		// Host contains hostname and needs to be resolved to IP
 		resolving = IP::get_singleton()->resolve_hostname_queue_item(conn_host);
@@ -92,8 +92,8 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 	return OK;
 }
 
-Error HTTPClient::try_connect(int p_port) {
-	Error err = tcp_connection->connect_to_host(IP_Address(conn_host), p_port);
+Error HTTPClient::try_connect(IP_Address host, int p_port) {
+	Error err = tcp_connection->connect_to_host(host, p_port);
 	if (err) {
 		status = STATUS_CANT_CONNECT;
 		return err;
@@ -208,15 +208,8 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 	ERR_FAIL_COND_V(status != STATUS_CONNECTED, ERR_INVALID_PARAMETER);
 	ERR_FAIL_COND_V(connection.is_null(), ERR_INVALID_DATA);
 
-	String request = String(_methods[p_method]) + " " + p_url + " HTTP/1.1\r\n";
-	bool host_not_defined = true;
-	bool clen_not_defined = p_body.size() > 0;
-	bool uagent_not_defined = true;
-	bool accept_not_defined = true;
-	filter_headers(p_headers, request, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
-	add_headers(request, p_body, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
+	String request = configure_headers(p_method, p_url, p_body, p_headers, request);
 	Vector<uint8_t> data = configure_body(request.utf8());
-	
 	data.append_array(p_body);
 
 	Error err = connection->put_data(&data.ptr()[0], data.size());
@@ -233,14 +226,16 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 	return OK;
 }
 
-
-
-
-
-
-
-
-
+String HTTPClient::configure_headers(Method p_method, const String p_url, const PackedByteArray &p_body, const PackedStringArray &p_headers, String &request) {
+	String request = String(_methods[p_method]) + " " + p_url + " HTTP/1.1\r\n";
+	bool host_not_defined = true;
+	bool clen_not_defined = p_body.size() > 0;
+	bool uagent_not_defined = true;
+	bool accept_not_defined = true;
+	filter_headers(p_headers, request, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
+	add_headers(request, p_body, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
+	return request
+}
 
 Error HTTPClient::request(Method p_method, const String &p_url, const Vector<String> &p_headers, const String &p_body) {
 	ERR_FAIL_INDEX_V(p_method, METHOD_MAX, ERR_INVALID_PARAMETER);
@@ -248,47 +243,8 @@ Error HTTPClient::request(Method p_method, const String &p_url, const Vector<Str
 	ERR_FAIL_COND_V(status != STATUS_CONNECTED, ERR_INVALID_PARAMETER);
 	ERR_FAIL_COND_V(connection.is_null(), ERR_INVALID_DATA);
 
-	String request = String(_methods[p_method]) + " " + p_url + " HTTP/1.1\r\n";
-	bool add_host = true;
-	bool add_uagent = true;
-	bool add_accept = true;
-	bool add_clen = p_body.length() > 0;
-	for (int i = 0; i < p_headers.size(); i++) {
-		request += p_headers[i] + "\r\n";
-		if (add_host && p_headers[i].findn("Host:") == 0) {
-			add_host = false;
-		}
-		if (add_clen && p_headers[i].findn("Content-Length:") == 0) {
-			add_clen = false;
-		}
-		if (add_uagent && p_headers[i].findn("User-Agent:") == 0) {
-			add_uagent = false;
-		}
-		if (add_accept && p_headers[i].findn("Accept:") == 0) {
-			add_accept = false;
-		}
-	}
-	if (add_host) {
-		if ((ssl && conn_port == PORT_HTTPS) || (!ssl && conn_port == PORT_HTTP)) {
-			// Don't append the standard ports
-			request += "Host: " + conn_host + "\r\n";
-		} else {
-			request += "Host: " + conn_host + ":" + itos(conn_port) + "\r\n";
-		}
-	}
-	if (add_clen) {
-		request += "Content-Length: " + itos(p_body.utf8().length()) + "\r\n";
-		// Should it add utf8 encoding?
-	}
-	if (add_uagent) {
-		request += "User-Agent: GodotEngine/" + String(VERSION_FULL_BUILD) + " (" + OS::get_singleton()->get_name() + ")\r\n";
-	}
-	if (add_accept) {
-		request += "Accept: */*\r\n";
-	}
-	request += "\r\n";
+	String request = configure_headers(p_method, p_url, p_body.to_utf32_buffer(), p_headers, request);
 	request += p_body;
-
 	CharString cs = request.utf8();
 	Error err = connection->put_data((const uint8_t *)cs.ptr(), cs.length());
 	if (err) {
@@ -356,91 +312,17 @@ void HTTPClient::close() {
 Error HTTPClient::poll() {
 	switch (status) {
 		case STATUS_RESOLVING: {
-			ERR_FAIL_COND_V(resolving == IP::RESOLVER_INVALID_ID, ERR_BUG);
-
-			IP::ResolverStatus rstatus = IP::get_singleton()->get_resolve_item_status(resolving);
-			switch (rstatus) {
-				case IP::RESOLVER_STATUS_WAITING:
-					return OK; // Still resolving
-
-				case IP::RESOLVER_STATUS_DONE: {
-					IP_Address host = IP::get_singleton()->get_resolve_item_address(resolving);
-					Error err = tcp_connection->connect_to_host(host, conn_port);
-					IP::get_singleton()->erase_resolve_item(resolving);
-					resolving = IP::RESOLVER_INVALID_ID;
-					if (err) {
-						status = STATUS_CANT_CONNECT;
-						return err;
-					}
-
-					status = STATUS_CONNECTING;
-				} break;
-				case IP::RESOLVER_STATUS_NONE:
-				case IP::RESOLVER_STATUS_ERROR: {
-					IP::get_singleton()->erase_resolve_item(resolving);
-					resolving = IP::RESOLVER_INVALID_ID;
-					close();
-					status = STATUS_CANT_RESOLVE;
-					return ERR_CANT_RESOLVE;
-				} break;
-			}
+				bool return_error;
+				Error err = resolve(return_error);
+				if (return_error)
+					return err;
 		} break;
 		case STATUS_CONNECTING: {
-			StreamPeerTCP::Status s = tcp_connection->get_status();
-			switch (s) {
-				case StreamPeerTCP::STATUS_CONNECTING: {
-					return OK;
-				} break;
-				case StreamPeerTCP::STATUS_CONNECTED: {
-					if (ssl) {
-						Ref<StreamPeerSSL> ssl;
-						if (!handshaking) {
-							// Connect the StreamPeerSSL and start handshaking
-							ssl = Ref<StreamPeerSSL>(StreamPeerSSL::create());
-							ssl->set_blocking_handshake_enabled(false);
-							Error err = ssl->connect_to_stream(tcp_connection, ssl_verify_host, conn_host);
-							if (err != OK) {
-								close();
-								status = STATUS_SSL_HANDSHAKE_ERROR;
-								return ERR_CANT_CONNECT;
-							}
-							connection = ssl;
-							handshaking = true;
-						} else {
-							// We are already handshaking, which means we can use your already active SSL connection
-							ssl = static_cast<Ref<StreamPeerSSL>>(connection);
-							if (ssl.is_null()) {
-								close();
-								status = STATUS_SSL_HANDSHAKE_ERROR;
-								return ERR_CANT_CONNECT;
-							}
-
-							ssl->poll(); // Try to finish the handshake
-						}
-
-						if (ssl->get_status() == StreamPeerSSL::STATUS_CONNECTED) {
-							// Handshake has been successful
-							handshaking = false;
-							status = STATUS_CONNECTED;
-							return OK;
-						} else if (ssl->get_status() != StreamPeerSSL::STATUS_HANDSHAKING) {
-							// Handshake has failed
-							close();
-							status = STATUS_SSL_HANDSHAKE_ERROR;
-							return ERR_CANT_CONNECT;
-						}
-						// ... we will need to poll more for handshake to finish
-					} else {
-						status = STATUS_CONNECTED;
-					}
-					return OK;
-				} break;
-				case StreamPeerTCP::STATUS_ERROR:
-				case StreamPeerTCP::STATUS_NONE: {
-					close();
-					status = STATUS_CANT_CONNECT;
-					return ERR_CANT_CONNECT;
-				} break;
+			{
+				bool return_error;
+				Error err = connect(return_error);
+				if (return_error)
+					return err;
 			}
 		} break;
 		case STATUS_BODY:
@@ -561,6 +443,100 @@ Error HTTPClient::poll() {
 	}
 
 	return OK;
+}
+
+Error HTTPClient::connect(bool &retflag) {
+	retflag = true;
+	StreamPeerTCP::Status s = tcp_connection->get_status();
+	switch (s) {
+		case StreamPeerTCP::STATUS_CONNECTING: {
+			return OK;
+		} break;
+		case StreamPeerTCP::STATUS_CONNECTED: {
+			if (ssl) {
+				Ref<StreamPeerSSL> ssl;
+				if (!handshaking) {
+					// Connect the StreamPeerSSL and start handshaking
+					ssl = Ref<StreamPeerSSL>(StreamPeerSSL::create());
+					ssl->set_blocking_handshake_enabled(false);
+					Error err = ssl->connect_to_stream(tcp_connection, ssl_verify_host, conn_host);
+					if (err != OK) {
+						close();
+						status = STATUS_SSL_HANDSHAKE_ERROR;
+						return ERR_CANT_CONNECT;
+					}
+					connection = ssl;
+					handshaking = true;
+				} else {
+					// We are already handshaking, which means we can use your already active SSL connection
+					ssl = static_cast<Ref<StreamPeerSSL>>(connection);
+					if (ssl.is_null()) {
+						close();
+						status = STATUS_SSL_HANDSHAKE_ERROR;
+						return ERR_CANT_CONNECT;
+					}
+
+					ssl->poll(); // Try to finish the handshake
+				}
+
+				if (ssl->get_status() == StreamPeerSSL::STATUS_CONNECTED) {
+					// Handshake has been successful
+					handshaking = false;
+					status = STATUS_CONNECTED;
+					return OK;
+				} else if (ssl->get_status() != StreamPeerSSL::STATUS_HANDSHAKING) {
+					// Handshake has failed
+					close();
+					status = STATUS_SSL_HANDSHAKE_ERROR;
+					return ERR_CANT_CONNECT;
+				}
+				// ... we will need to poll more for handshake to finish
+			} else {
+				status = STATUS_CONNECTED;
+			}
+			return OK;
+		} break;
+		case StreamPeerTCP::STATUS_ERROR:
+		case StreamPeerTCP::STATUS_NONE: {
+			close();
+			status = STATUS_CANT_CONNECT;
+			return ERR_CANT_CONNECT;
+		} break;
+	}
+	retflag = false;
+	return {};
+}
+
+Error HTTPClient::resolve(bool &return_error) {
+	return_error = true;
+	ERR_FAIL_COND_V(resolving == IP::RESOLVER_INVALID_ID, ERR_BUG);
+
+	IP::ResolverStatus rstatus = IP::get_singleton()->get_resolve_item_status(resolving);
+	switch (rstatus) {
+		case IP::RESOLVER_STATUS_WAITING:
+			return OK; // Still resolving
+		case IP::RESOLVER_STATUS_DONE: {
+			IP_Address host = IP::get_singleton()->get_resolve_item_address(resolving);
+			Error err = try_connect(host);
+			erase_resolve_item();
+			if (err)
+				return err;
+		} break;
+		case IP::RESOLVER_STATUS_NONE:
+		case IP::RESOLVER_STATUS_ERROR: {
+			erase_resolve_item();
+			close();
+			status = STATUS_CANT_RESOLVE;
+			return ERR_CANT_RESOLVE;
+		} break;
+	}
+	return_error = false;
+	return {};
+}
+
+void HTTPClient::erase_resolve_item() {
+	IP::get_singleton()->erase_resolve_item(resolving);
+	resolving = IP::RESOLVER_INVALID_ID;
 }
 
 int HTTPClient::get_response_body_length() const {
