@@ -226,7 +226,7 @@ public:
 	HTTPClient();
 	~HTTPClient();
 
-private:
+protected:
 	void get_host_protocol();
 	void set_connection_port();
 	Error try_connect(IP_Address host, int p_port);

@@ -35,7 +35,10 @@
 #include "core/io/http_client.h"
 namespace TestHttpClient {
 	class TestHTTPClient : public HTTPClient {
-
+public:
+		void test_get_host_protocol() {
+			get_host_protocol();
+		}
 	};
 	TEST_CASE("[Http_Client] Get Host Protocol") {
 
