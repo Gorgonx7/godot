@@ -238,7 +238,7 @@ private:
 	void add_host(String &request);
 
 	Error request_raw(Method p_method, const String &p_url, const Vector<String> &p_headers, const Vector<uint8_t> &p_body);
-	String configure_headers(Method p_method, const String p_url, const PackedByteArray &p_body, const PackedStringArray &p_headers, String &request);
+	String configure_headers(Method p_method, const String p_url, const PackedByteArray &p_body, const PackedStringArray &p_headers);
 	Vector<uint8_t> configure_body(CharString &cs);
 
 	void filter_headers(const PackedStringArray &p_headers, String &request, bool &add_host, bool &add_clen, bool &add_uagent, bool &add_accept);

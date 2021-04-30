@@ -208,7 +208,7 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 	ERR_FAIL_COND_V(status != STATUS_CONNECTED, ERR_INVALID_PARAMETER);
 	ERR_FAIL_COND_V(connection.is_null(), ERR_INVALID_DATA);
 
-	String request = configure_headers(p_method, p_url, p_body, p_headers, request);
+	String request = configure_headers(p_method, p_url, p_body, p_headers);
 	Vector<uint8_t> data = configure_body(request.utf8());
 	data.append_array(p_body);
 
@@ -226,7 +226,7 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 	return OK;
 }
 
-String HTTPClient::configure_headers(Method p_method, const String p_url, const PackedByteArray &p_body, const PackedStringArray &p_headers, String &request) {
+String HTTPClient::configure_headers(Method p_method, const String p_url, const PackedByteArray &p_body, const PackedStringArray &p_headers) {
 	String request = String(_methods[p_method]) + " " + p_url + " HTTP/1.1\r\n";
 	bool host_not_defined = true;
 	bool clen_not_defined = p_body.size() > 0;
@@ -243,7 +243,7 @@ Error HTTPClient::request(Method p_method, const String &p_url, const Vector<Str
 	ERR_FAIL_COND_V(status != STATUS_CONNECTED, ERR_INVALID_PARAMETER);
 	ERR_FAIL_COND_V(connection.is_null(), ERR_INVALID_DATA);
 
-	String request = configure_headers(p_method, p_url, p_body.to_utf32_buffer(), p_headers, request);
+	String request = configure_headers(p_method, p_url, p_body.to_utf32_buffer(), p_headers);
 	request += p_body;
 	CharString cs = request.utf8();
 	Error err = connection->put_data((const uint8_t *)cs.ptr(), cs.length());
