@@ -234,7 +234,7 @@ String HTTPClient::configure_headers(Method p_method, const String p_url, const 
 	bool accept_not_defined = true;
 	filter_headers(p_headers, request, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
 	add_headers(request, p_body, host_not_defined, clen_not_defined, uagent_not_defined, accept_not_defined);
-	return request
+	return request;
 }
 
 Error HTTPClient::request(Method p_method, const String &p_url, const Vector<String> &p_headers, const String &p_body) {
@@ -318,12 +318,10 @@ Error HTTPClient::poll() {
 					return err;
 		} break;
 		case STATUS_CONNECTING: {
-			{
 				bool return_error;
 				Error err = connect(return_error);
 				if (return_error)
 					return err;
-			}
 		} break;
 		case STATUS_BODY:
 		case STATUS_CONNECTED: {
@@ -517,7 +515,7 @@ Error HTTPClient::resolve(bool &return_error) {
 			return OK; // Still resolving
 		case IP::RESOLVER_STATUS_DONE: {
 			IP_Address host = IP::get_singleton()->get_resolve_item_address(resolving);
-			Error err = try_connect(host);
+			Error err = try_connect(host, conn_port);
 			erase_resolve_item();
 			if (err)
 				return err;
