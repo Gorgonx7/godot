@@ -35,6 +35,7 @@
 #include "core/io/stream_peer.h"
 #include "core/io/stream_peer_tcp.h"
 #include "core/object/reference.h"
+//typedef Error Connect(const IP_Address &p_host, uint16_t p_port);
 
 class HTTPClient : public Reference {
 	GDCLASS(HTTPClient, Reference);
@@ -229,7 +230,7 @@ public:
 protected:
 	void get_host_protocol();
 	void set_connection_port();
-	Error try_connect(IP_Address host, int p_port);
+	Error try_connect(const IP_Address &p_host, uint16_t p_port);
 
 	void add_uagent(String &request);
 	void add_headers(String &request, const PackedByteArray &p_body, bool host_not_defined, bool clen_not_defined, bool uagent_not_defined, bool accept_not_defined);
@@ -245,6 +246,11 @@ protected:
 	Error resolve(bool &return_error);
 	Error connect(bool &return_error);
 	void erase_resolve_item();
+	inline Error * tcp_connecter(const IP_Address &p_host, uint16_t p_port) {
+		Error err = tcp_connection->connect_to_host(p_host, p_port);
+	}
+	Error (*tcp_connect)(const IP_Address &p_host, uint16_t p_port);
+
 };
 
 VARIANT_ENUM_CAST(HTTPClient::ResponseCode)

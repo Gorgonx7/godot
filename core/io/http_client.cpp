@@ -92,8 +92,8 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 	return OK;
 }
 
-Error HTTPClient::try_connect(IP_Address host, int p_port) {
-	Error err = tcp_connection->connect_to_host(host, p_port);
+Error HTTPClient::try_connect(const IP_Address &p_host, uint16_t p_port) {
+	Error err = tcp_connect(p_host, p_port);
 	if (err) {
 		status = STATUS_CANT_CONNECT;
 		return err;
@@ -741,6 +741,7 @@ int HTTPClient::get_read_chunk_size() const {
 
 HTTPClient::HTTPClient() {
 	tcp_connection.instance();
+	tcp_connect = tcp_connecter;
 }
 
 HTTPClient::~HTTPClient() {}
