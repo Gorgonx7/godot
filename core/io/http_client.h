@@ -246,10 +246,10 @@ protected:
 	Error resolve(bool &return_error);
 	Error connect(bool &return_error);
 	void erase_resolve_item();
-	inline Error * tcp_connecter(const IP_Address &p_host, uint16_t p_port) {
+	inline Error tcp_connecter(const IP_Address &p_host, uint16_t p_port) {
 		Error err = tcp_connection->connect_to_host(p_host, p_port);
 	}
-	Error (*tcp_connect)(const IP_Address &p_host, uint16_t p_port);
+	Error (tcp_connect)(const IP_Address &p_host, uint16_t p_port);
 
 };
 
