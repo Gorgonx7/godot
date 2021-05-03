@@ -36,12 +36,24 @@
 namespace TestHttpClient {
 	class TestHTTPClient : public HTTPClient {
 public:
-		void test_get_host_protocol() {
-			get_host_protocol();
+		
+		String test_get_host_protocol(String host) {
+			return get_host_protocol(host);
 		}
 	};
 	TEST_CASE("[Http_Client] Get Host Protocol") {
-
+		struct Test { 
+			String conn_string, want_conn_string;
+			bool want_ssl;
+		};
+		const Test tt [2] = {
+			{ "http://", "", false },
+			{ "https://", "", true }
+		};
+		for (int x = 0; x < sizeof(tt); x++) {
+			TestHTTPClient test_client;
+			CHECK(test_client.test_get_host_protocol(tt[x].conn_string) == tt[x].want_conn_string);
+		}
 	}
 } // namespace TestHttpClient
 #endif // TEST_HTTP_CLIENT_H

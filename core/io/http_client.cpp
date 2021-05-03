@@ -46,14 +46,15 @@ const char *HTTPClient::_methods[METHOD_MAX] = {
 };
 
 #ifndef JAVASCRIPT_ENABLED
-void HTTPClient::get_host_protocol() {
-	String host_lower = conn_host.to_lower();
+String HTTPClient::get_host_protocol(String host) {
+	String host_lower = host.to_lower();
 	if (host_lower.begins_with("http://")) {
-		conn_host = conn_host.substr(7, conn_host.length() - 7);
+		return conn_host.substr(7, conn_host.length() - 7);
 	} else if (host_lower.begins_with("https://")) {
 		ssl = true;
-		conn_host = conn_host.substr(8, conn_host.length() - 8);
+		return conn_host.substr(8, conn_host.length() - 8);
 	}
+	return "";
 }
 void HTTPClient::set_connection_port() {
 	if (conn_port < 0) {
@@ -73,7 +74,7 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 	ssl = p_ssl;
 	ssl_verify_host = p_verify_host;
 
-	get_host_protocol();
+	conn_host = get_host_protocol(conn_host);
 
 	ERR_FAIL_COND_V(conn_host.length() < HOST_MIN_LEN, ERR_INVALID_PARAMETER);
 
@@ -93,7 +94,7 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 }
 
 Error HTTPClient::try_connect(const IP_Address &p_host, uint16_t p_port) {
-	Error err = tcp_connect(p_host, p_port);
+	Error err = tcp_connection->connect_to_host(p_host, p_port);
 	if (err) {
 		status = STATUS_CANT_CONNECT;
 		return err;
@@ -741,7 +742,6 @@ int HTTPClient::get_read_chunk_size() const {
 
 HTTPClient::HTTPClient() {
 	tcp_connection.instance();
-	tcp_connect = &tcp_connecter;
 }
 
 HTTPClient::~HTTPClient() {}

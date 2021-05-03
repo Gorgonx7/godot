@@ -35,7 +35,6 @@
 #include "core/io/stream_peer.h"
 #include "core/io/stream_peer_tcp.h"
 #include "core/object/reference.h"
-//typedef Error Connect(const IP_Address &p_host, uint16_t p_port);
 
 class HTTPClient : public Reference {
 	GDCLASS(HTTPClient, Reference);
@@ -201,7 +200,7 @@ public:
 	Ref<StreamPeer> get_connection() const;
 	
 	Error request(Method p_method, const String &p_url, const Vector<String> &p_headers, const String &p_body = String());
-
+	Error request_raw(Method p_method, const String &p_url, const Vector<String> &p_headers, const Vector<uint8_t> &p_body);
 	void close();
 
 	Status get_status() const;
@@ -228,7 +227,7 @@ public:
 	~HTTPClient();
 
 protected:
-	void get_host_protocol();
+	String get_host_protocol(String host);
 	void set_connection_port();
 	Error try_connect(const IP_Address &p_host, uint16_t p_port);
 
@@ -238,7 +237,7 @@ protected:
 	void add_clen(String &request, const PackedByteArray &p_body);
 	void add_host(String &request);
 
-	Error request_raw(Method p_method, const String &p_url, const Vector<String> &p_headers, const Vector<uint8_t> &p_body);
+	
 	String configure_headers(Method p_method, const String p_url, const PackedByteArray &p_body, const PackedStringArray &p_headers);
 	Vector<uint8_t> configure_body(CharString &cs);
 
@@ -246,10 +245,6 @@ protected:
 	Error resolve(bool &return_error);
 	Error connect(bool &return_error);
 	void erase_resolve_item();
-	inline Error tcp_connecter(const IP_Address &p_host, uint16_t p_port) {
-		Error err = tcp_connection->connect_to_host(p_host, p_port);
-	}
-	Error (tcp_connect)(const IP_Address &p_host, uint16_t p_port);
 
 };
 
