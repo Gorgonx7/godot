@@ -50,6 +50,7 @@
 #include "test_gradient.h"
 #include "test_gui.h"
 #include "test_hashing_context.h"
+#include "test_http_client.h"
 #include "test_image.h"
 #include "test_json.h"
 #include "test_list.h"

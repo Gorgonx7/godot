@@ -34,26 +34,59 @@
 #include "tests/test_macros.h"
 #include "core/io/http_client.h"
 namespace TestHttpClient {
+enum Port {
+	PORT_HTTP = 80,
+	PORT_HTTPS = 443,
+
+};
 	class TestHTTPClient : public HTTPClient {
 public:
-		
-		String test_get_host_protocol(String host) {
-			return get_host_protocol(host);
-		}
+	bool get_ssl(){
+		return ssl;
 	};
-	TEST_CASE("[Http_Client] Get Host Protocol") {
+	void set_ssl(bool p_ssl){
+		ssl = p_ssl;
+	};
+	String test_get_host_protocol(String host) {
+		return get_host_protocol(host);
+	};
+	int test_set_connection_port(int port) {
+		return set_connection_port(port);
+	}
+	};
+	TEST_CASE("[http_client] Get Host Protocol") {
 		struct Test { 
 			String conn_string, want_conn_string;
 			bool want_ssl;
 		};
 		const Test tt [2] = {
-			{ "http://", "", false },
-			{ "https://", "", true }
+			{ "http://test", "test", false },
+			{ "https://testNotSSL", "testNotSSL", true }
 		};
-		for (int x = 0; x < sizeof(tt); x++) {
+		for (int x = 0; x < 2; x++) {
 			TestHTTPClient test_client;
 			CHECK(test_client.test_get_host_protocol(tt[x].conn_string) == tt[x].want_conn_string);
+			CHECK(test_client.get_ssl() == tt[x].want_ssl);
 		}
 	}
-} // namespace TestHttpClient
+
+	TEST_CASE("[http_client] Set Connection Port"){
+		struct Test {
+			int conn_port, want_port;
+			bool is_ssl;
+		};
+		const Test tt[4] = {
+			{ -1, PORT_HTTP, false },
+			{ -1, PORT_HTTPS, true },
+			{ 44, 44, false},
+			{ 44, 44, true }
+		};
+		for (int x = 0; x < 2; x++) {
+			TestHTTPClient test_client;
+			test_client.set_ssl(tt[x].is_ssl);
+			int got = test_client.test_set_connection_port(tt[x].conn_port);
+			CHECK(got == tt[x].want_port);
+		}
+	}
+	} // namespace TestHttpClient
 #endif // TEST_HTTP_CLIENT_H

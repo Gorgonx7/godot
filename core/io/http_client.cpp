@@ -49,19 +49,19 @@ const char *HTTPClient::_methods[METHOD_MAX] = {
 String HTTPClient::get_host_protocol(String host) {
 	String host_lower = host.to_lower();
 	if (host_lower.begins_with("http://")) {
-		return conn_host.substr(7, conn_host.length() - 7);
+		return host.substr(7, host.length() - 7);
 	} else if (host_lower.begins_with("https://")) {
 		ssl = true;
-		return conn_host.substr(8, conn_host.length() - 8);
+		return host.substr(8, host.length() - 8);
 	}
 	return "";
 }
-void HTTPClient::set_connection_port() {
-	if (conn_port < 0) {
+int HTTPClient::set_connection_port(int port) {
+	if (port < 0) {
 		if (ssl) {
-			conn_port = PORT_HTTPS;
+			return PORT_HTTPS;
 		} else {
-			conn_port = PORT_HTTP;
+			return PORT_HTTP;
 		}
 	}
 }
@@ -78,7 +78,7 @@ Error HTTPClient::connect_to_host(const String &p_host, int p_port, bool p_ssl, 
 
 	ERR_FAIL_COND_V(conn_host.length() < HOST_MIN_LEN, ERR_INVALID_PARAMETER);
 
-	set_connection_port();
+	conn_port = set_connection_port(conn_port);
 
 	connection = tcp_connection;
 

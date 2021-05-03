@@ -157,7 +157,7 @@ private:
 	IP::ResolverID resolving = IP::RESOLVER_INVALID_ID;
 	int conn_port = -1;
 	String conn_host;
-	bool ssl = false;
+	
 	bool ssl_verify_host = false;
 	bool blocking = false;
 	bool handshaking = false;
@@ -228,7 +228,7 @@ public:
 
 protected:
 	String get_host_protocol(String host);
-	void set_connection_port();
+	int set_connection_port(int port);
 	Error try_connect(const IP_Address &p_host, uint16_t p_port);
 
 	void add_uagent(String &request);
@@ -245,6 +245,9 @@ protected:
 	Error resolve(bool &return_error);
 	Error connect(bool &return_error);
 	void erase_resolve_item();
+#ifndef JAVASCRIPT_ENABLED
+	bool ssl = false;
+#endif
 
 };
 
