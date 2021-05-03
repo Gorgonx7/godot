@@ -1412,6 +1412,16 @@ void Viewport::_update_canvas_items(Node *p_node) {
 	}
 }
 
+void Viewport::set_use_xr(bool p_use_xr) {
+	use_xr = p_use_xr;
+
+	RS::get_singleton()->viewport_set_use_xr(viewport, use_xr);
+}
+
+bool Viewport::is_using_xr() {
+	return use_xr;
+}
+
 Ref<ViewportTexture> Viewport::get_texture() const {
 	return default_texture;
 }
@@ -3242,6 +3252,21 @@ float Viewport::get_lod_threshold() const {
 	return lod_threshold;
 }
 
+void Viewport::set_use_occlusion_culling(bool p_use_occlusion_culling) {
+	if (use_occlusion_culling == p_use_occlusion_culling) {
+		return;
+	}
+
+	use_occlusion_culling = p_use_occlusion_culling;
+	RS::get_singleton()->viewport_set_use_occlusion_culling(viewport, p_use_occlusion_culling);
+
+	notify_property_list_changed();
+}
+
+bool Viewport::is_using_occlusion_culling() const {
+	return use_occlusion_culling;
+}
+
 void Viewport::set_debug_draw(DebugDraw p_debug_draw) {
 	debug_draw = p_debug_draw;
 	RS::get_singleton()->viewport_set_debug_draw(viewport, RS::ViewportDebugDraw(p_debug_draw));
@@ -3329,9 +3354,6 @@ void Viewport::set_handle_input_locally(bool p_enable) {
 
 bool Viewport::is_handling_input_locally() const {
 	return handle_input_locally;
-}
-
-void Viewport::_validate_property(PropertyInfo &property) const {
 }
 
 void Viewport::set_default_canvas_item_texture_filter(DefaultCanvasItemTextureFilter p_filter) {
@@ -3478,10 +3500,16 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_use_debanding", "enable"), &Viewport::set_use_debanding);
 	ClassDB::bind_method(D_METHOD("is_using_debanding"), &Viewport::is_using_debanding);
 
+	ClassDB::bind_method(D_METHOD("set_use_occlusion_culling", "enable"), &Viewport::set_use_occlusion_culling);
+	ClassDB::bind_method(D_METHOD("is_using_occlusion_culling"), &Viewport::is_using_occlusion_culling);
+
 	ClassDB::bind_method(D_METHOD("set_debug_draw", "debug_draw"), &Viewport::set_debug_draw);
 	ClassDB::bind_method(D_METHOD("get_debug_draw"), &Viewport::get_debug_draw);
 
 	ClassDB::bind_method(D_METHOD("get_render_info", "info"), &Viewport::get_render_info);
+
+	ClassDB::bind_method(D_METHOD("set_use_xr", "use"), &Viewport::set_use_xr);
+	ClassDB::bind_method(D_METHOD("is_using_xr"), &Viewport::is_using_xr);
 
 	ClassDB::bind_method(D_METHOD("get_texture"), &Viewport::get_texture);
 
@@ -3563,6 +3591,7 @@ void Viewport::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_process_picking"), &Viewport::_process_picking);
 
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_xr"), "set_use_xr", "is_using_xr");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "own_world_3d"), "set_use_own_world_3d", "is_using_own_world_3d");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world_3d", PROPERTY_HINT_RESOURCE_TYPE, "World3D"), "set_world_3d", "get_world_3d");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world_2d", PROPERTY_HINT_RESOURCE_TYPE, "World2D", 0), "set_world_2d", "get_world_2d");
@@ -3574,6 +3603,7 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "msaa", PROPERTY_HINT_ENUM, "Disabled,2x,4x,8x,16x,AndroidVR 2x,AndroidVR 4x"), "set_msaa", "get_msaa");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "screen_space_aa", PROPERTY_HINT_ENUM, "Disabled,FXAA"), "set_screen_space_aa", "get_screen_space_aa");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_debanding"), "set_use_debanding", "is_using_debanding");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_occlusion_culling"), "set_use_occlusion_culling", "is_using_occlusion_culling");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "lod_threshold", PROPERTY_HINT_RANGE, "0,1024,0.1"), "set_lod_threshold", "get_lod_threshold");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "debug_draw", PROPERTY_HINT_ENUM, "Disabled,Unshaded,Overdraw,Wireframe"), "set_debug_draw", "get_debug_draw");
 	ADD_GROUP("Canvas Items", "canvas_item_");
@@ -3655,6 +3685,7 @@ void Viewport::_bind_methods() {
 	BIND_ENUM_CONSTANT(DEBUG_DRAW_CLUSTER_SPOT_LIGHTS);
 	BIND_ENUM_CONSTANT(DEBUG_DRAW_CLUSTER_DECALS);
 	BIND_ENUM_CONSTANT(DEBUG_DRAW_CLUSTER_REFLECTION_PROBES);
+	BIND_ENUM_CONSTANT(DEBUG_DRAW_OCCLUDERS)
 
 	BIND_ENUM_CONSTANT(DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST);
 	BIND_ENUM_CONSTANT(DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR);
@@ -3729,16 +3760,6 @@ Viewport::~Viewport() {
 
 /////////////////////////////////
 
-void SubViewport::set_use_xr(bool p_use_xr) {
-	xr = p_use_xr;
-
-	RS::get_singleton()->viewport_set_use_xr(get_viewport_rid(), xr);
-}
-
-bool SubViewport::is_using_xr() {
-	return xr;
-}
-
 void SubViewport::set_size(const Size2i &p_size) {
 	_set_size(p_size, _get_size_2d_override(), Rect2i(), _stretch_transform(), true);
 }
@@ -3811,9 +3832,6 @@ void SubViewport::_notification(int p_what) {
 }
 
 void SubViewport::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_use_xr", "use"), &SubViewport::set_use_xr);
-	ClassDB::bind_method(D_METHOD("is_using_xr"), &SubViewport::is_using_xr);
-
 	ClassDB::bind_method(D_METHOD("set_size", "size"), &SubViewport::set_size);
 	ClassDB::bind_method(D_METHOD("get_size"), &SubViewport::get_size);
 
@@ -3829,7 +3847,6 @@ void SubViewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_clear_mode", "mode"), &SubViewport::set_clear_mode);
 	ClassDB::bind_method(D_METHOD("get_clear_mode"), &SubViewport::get_clear_mode);
 
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "xr"), "set_use_xr", "is_using_xr");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size_2d_override"), "set_size_2d_override", "get_size_2d_override");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "size_2d_override_stretch"), "set_size_2d_override_stretch", "is_size_2d_override_stretch_enabled");

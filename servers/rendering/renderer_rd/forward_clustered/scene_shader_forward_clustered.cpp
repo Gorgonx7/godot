@@ -73,6 +73,7 @@ void SceneShaderForwardClustered::ShaderData::set_code(const String &p_code) {
 	uses_time = false;
 	writes_modelview_or_projection = false;
 	uses_world_coordinates = false;
+	uses_particle_trails = false;
 
 	int depth_drawi = DEPTH_DRAW_OPAQUE;
 
@@ -101,6 +102,7 @@ void SceneShaderForwardClustered::ShaderData::set_code(const String &p_code) {
 
 	actions.render_mode_flags["unshaded"] = &unshaded;
 	actions.render_mode_flags["wireframe"] = &wireframe;
+	actions.render_mode_flags["particle_trails"] = &uses_particle_trails;
 
 	actions.usage_flag_pointers["ALPHA"] = &uses_alpha;
 	actions.render_mode_flags["depth_prepass_alpha"] = &uses_depth_pre_pass;
@@ -144,12 +146,17 @@ void SceneShaderForwardClustered::ShaderData::set_code(const String &p_code) {
 	for (int i = 0; i < gen_code.defines.size(); i++) {
 		print_line(gen_code.defines[i]);
 	}
+
+	Map<String, String>::Element * el = gen_code.code.front();
+	while (el) {
+		print_line("\n**code " + el->key() + ":\n" + el->value());
+
+		el = el->next();
+	}
+
 	print_line("\n**uniforms:\n" + gen_code.uniforms);
-	print_line("\n**vertex_globals:\n" + gen_code.vertex_global);
-	print_line("\n**vertex_code:\n" + gen_code.vertex);
-	print_line("\n**fragment_globals:\n" + gen_code.fragment_global);
-	print_line("\n**fragment_code:\n" + gen_code.fragment);
-	print_line("\n**light_code:\n" + gen_code.light);
+	print_line("\n**vertex_globals:\n" + gen_code.stage_globals[ShaderCompilerRD::STAGE_VERTEX]);
+	print_line("\n**fragment_globals:\n" + gen_code.stage_globals[ShaderCompilerRD::STAGE_FRAGMENT]);
 #endif
 	shader_singleton->shader.version_set_code(version, gen_code.code, gen_code.uniforms, gen_code.stage_globals[ShaderCompilerRD::STAGE_VERTEX], gen_code.stage_globals[ShaderCompilerRD::STAGE_FRAGMENT], gen_code.defines);
 	ERR_FAIL_COND(!shader_singleton->shader.version_is_valid(version));
@@ -564,18 +571,6 @@ void SceneShaderForwardClustered::init(RendererStorageRD *p_storage, const Strin
 		shader_versions.push_back("\n#define USE_LIGHTMAP\n");
 		shader_versions.push_back("\n#define MODE_MULTIPLE_RENDER_TARGETS\n#define USE_LIGHTMAP\n");
 		shader.initialize(shader_versions, p_defines);
-
-		/*
-		if (p_is_low_end) {
-			//disable the high end versions
-			shader.set_variant_enabled(SHADER_VERSION_DEPTH_PASS_WITH_NORMAL_AND_ROUGHNESS, false);
-			shader.set_variant_enabled(SHADER_VERSION_DEPTH_PASS_WITH_NORMAL_AND_ROUGHNESS_AND_GIPROBE, false);
-			shader.set_variant_enabled(SHADER_VERSION_DEPTH_PASS_WITH_SDF, false);
-			shader.set_variant_enabled(SHADER_VERSION_COLOR_PASS_WITH_FORWARD_GI, false);
-			shader.set_variant_enabled(SHADER_VERSION_COLOR_PASS_WITH_SEPARATE_SPECULAR, false);
-			shader.set_variant_enabled(SHADER_VERSION_LIGHTMAP_COLOR_PASS_WITH_SEPARATE_SPECULAR, false);
-		}
-		*/
 	}
 
 	storage->shader_set_data_request_function(RendererStorageRD::SHADER_TYPE_3D, _create_shader_funcs);
@@ -714,6 +709,7 @@ void SceneShaderForwardClustered::init(RendererStorageRD *p_storage, const Strin
 		actions.render_mode_defines["ensure_correct_normals"] = "#define ENSURE_CORRECT_NORMALS\n";
 		actions.render_mode_defines["cull_front"] = "#define DO_SIDE_CHECK\n";
 		actions.render_mode_defines["cull_disabled"] = "#define DO_SIDE_CHECK\n";
+		actions.render_mode_defines["particle_trails"] = "#define USE_PARTICLE_TRAILS\n";
 
 		bool force_lambert = GLOBAL_GET("rendering/shading/overrides/force_lambert_over_burley");
 
