@@ -81,12 +81,27 @@ public:
 			{ 44, 44, false},
 			{ 44, 44, true }
 		};
-		for (int x = 0; x < 2; x++) {
+		for (int x = 0; x < 4; x++) {
 			TestHTTPClient test_client;
 			test_client.set_ssl(tt[x].is_ssl);
 			int got = test_client.test_set_connection_port(tt[x].conn_port);
 			CHECK(got == tt[x].want_port);
 		}
+	}
+
+	TEST_CASE("[http_client] Close Connection") {
+		struct Test {
+			int body_size, want_body_size, body_left, want_body_left, chunk_left, want_chunk_left, response_num, want_response_num;
+			bool chunk_trailer_part, want_chunk_trailer_part, read_until_eof, want_read_until_eof, handshaking, want_handshaking;
+			Ref<StreamPeerTCP> tcp_connection;
+		};
+		const Test tt[2] = {
+
+		};
+		for (int x = 0; x < 2; x++) {
+
+		}
+		TestHTTPClient test_client;
 	}
 	} // namespace TestHttpClient
 #endif // TEST_HTTP_CLIENT_H
