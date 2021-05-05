@@ -167,7 +167,7 @@ private:
 	bool chunked = false;
 	Vector<uint8_t> chunk;
 
-	Ref<StreamPeerTCP> tcp_connection;
+	
 	Ref<StreamPeer> connection;
 
 	Vector<String> response_headers;
@@ -245,7 +245,7 @@ protected:
 	bool chunk_trailer_part = false;
 	bool read_until_eof = false;
 	bool handshaking = false;
-
+	Ref<StreamPeerTCP> tcp_connection;
 	int body_size = -1;
 	int body_left = 0;
 	int response_num = 0;

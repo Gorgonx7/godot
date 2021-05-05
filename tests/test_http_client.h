@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  test_image.h                                                         */
+/*  test_http_client.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -75,6 +75,28 @@ public:
 	void set_handshaking(bool p_handshaking) {
 		handshaking = p_handshaking;
 	}
+	int get_body_size() {
+		return body_size;
+	}
+	int get_body_left() {
+		return body_left;
+	}
+	int get_chunk_left() {
+		return chunk_left;
+	}
+	int get_response_num() {
+		return response_num;
+	}
+	bool get_chunk_trailer_part() {
+		return chunk_trailer_part;
+	}
+	bool get_read_until_eof() {
+		return read_until_eof;
+	}
+	bool get_handshaking() {
+		return handshaking;
+	}
+	
 	};
 	TEST_CASE("[http_client] Get Host Protocol") {
 		struct Test { 
@@ -133,7 +155,6 @@ public:
 			test_client.set_read_until_eof(tt[x].read_until_eof);
 			test_client.set_handshaking(tt[x].handshaking);
 		}
-		TestHTTPClient test_client;
 	}
 	} // namespace TestHttpClient
 #endif // TEST_HTTP_CLIENT_H
