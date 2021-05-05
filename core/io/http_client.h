@@ -160,23 +160,16 @@ private:
 	
 	bool ssl_verify_host = false;
 	bool blocking = false;
-	bool handshaking = false;
 	bool head_request = false;
 
 	Vector<uint8_t> response_str;
 
 	bool chunked = false;
 	Vector<uint8_t> chunk;
-	int chunk_left = 0;
-	bool chunk_trailer_part = false;
-	int body_size = -1;
-	int body_left = 0;
-	bool read_until_eof = false;
 
 	Ref<StreamPeerTCP> tcp_connection;
 	Ref<StreamPeer> connection;
 
-	int response_num = 0;
 	Vector<String> response_headers;
 	// 64 KiB by default (favors fast download speeds at the cost of memory usage).
 	int read_chunk_size = 65536;
@@ -247,6 +240,15 @@ protected:
 	void erase_resolve_item();
 #ifndef JAVASCRIPT_ENABLED
 	bool ssl = false;
+
+	int chunk_left = 0;
+	bool chunk_trailer_part = false;
+	bool read_until_eof = false;
+	bool handshaking = false;
+
+	int body_size = -1;
+	int body_left = 0;
+	int response_num = 0;
 #endif
 
 };

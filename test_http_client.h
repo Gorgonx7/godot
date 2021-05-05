@@ -53,6 +53,28 @@ public:
 	int test_set_connection_port(int port) {
 		return set_connection_port(port);
 	}
+	
+	void set_body_size(int p_size) {
+		body_size = p_size;
+	}
+	void set_body_left(int p_body_left) {
+		body_left = p_body_left;
+	}
+	void set_chunk_left(int p_chunk_left) {
+		chunk_left = p_chunk_left;
+	}
+	void set_response_num(int p_response_num) {
+		response_num = p_response_num;
+	}
+	void set_chunk_trailer_part(bool p_chunk_trailer_part) {
+		chunk_trailer_part = p_chunk_trailer_part;
+	}
+	void set_read_until_eof(bool p_read_until_eof) {
+		read_until_eof = p_read_until_eof;
+	}
+	void set_handshaking(bool p_handshaking) {
+		handshaking = p_handshaking;
+	}
 	};
 	TEST_CASE("[http_client] Get Host Protocol") {
 		struct Test { 
@@ -91,15 +113,25 @@ public:
 
 	TEST_CASE("[http_client] Close Connection") {
 		struct Test {
-			int body_size, want_body_size, body_left, want_body_left, chunk_left, want_chunk_left, response_num, want_response_num;
-			bool chunk_trailer_part, want_chunk_trailer_part, read_until_eof, want_read_until_eof, handshaking, want_handshaking;
+			int body_size, body_left, chunk_left, response_num;
+			bool chunk_trailer_part, read_until_eof, handshaking;
 			Ref<StreamPeerTCP> tcp_connection;
+			int want_body_size = 0, want_body_left = 0, want_chunk_left = 0, want_response_num = 0;
+			bool want_chunk_trailer_part = false, want_read_until_eof = false, want_handshaking = false;
+
 		};
 		const Test tt[2] = {
-
+			{44, 25, 67, 55, true, true, true}
 		};
 		for (int x = 0; x < 2; x++) {
-
+			TestHTTPClient test_client;
+			test_client.set_body_size(tt[x].body_size);
+			test_client.set_body_left(tt[x].body_left);
+			test_client.set_chunk_left(tt[x].chunk_left);
+			test_client.set_response_num(tt[x].response_num);
+			test_client.set_chunk_trailer_part(tt[x].chunk_trailer_part);
+			test_client.set_read_until_eof(tt[x].read_until_eof);
+			test_client.set_handshaking(tt[x].handshaking);
 		}
 		TestHTTPClient test_client;
 	}
