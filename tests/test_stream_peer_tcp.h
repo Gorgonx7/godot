@@ -35,7 +35,7 @@
 #include "core/io/stream_peer_tcp.h"
 namespace TestStreamPeerTCP {
 	class Mock : StreamPeerTCP {
-		Ref<Mock> mock_socket;
+	Ref<TestNetSocket::Mock> mock_socket;
 		Mock() {
 		_sock = mock_socket;
 

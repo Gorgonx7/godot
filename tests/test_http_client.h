@@ -32,7 +32,9 @@
 #define TEST_HTTP_CLIENT_H
 
 #include "tests/test_macros.h"
+#include "tests/test_stream_peer_tcp.h"
 #include "core/io/http_client.h"
+
 namespace TestHttpClient {
 enum Port {
 	PORT_HTTP = 80,
@@ -41,6 +43,7 @@ enum Port {
 };
 	class TestHTTPClient : public HTTPClient {
 public:
+		TestStreamPeerTCP::Mock mockConnection;
 	bool get_ssl(){
 		return ssl;
 	};
@@ -96,7 +99,9 @@ public:
 	bool get_handshaking() {
 		return handshaking;
 	}
-	
+	void SetMockSocket() {
+		*tcp_connection = &mockConnection;
+	}
 	};
 	TEST_CASE("[http_client] Get Host Protocol") {
 		struct Test { 
